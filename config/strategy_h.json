@@ -1,0 +1,65 @@
+{
+  "name": "H1 Confidence Sizing",
+  "symbol": "XAUUSDm",
+  "timeframe": "H1",
+  "direction": "LONG_SHORT",
+  "timeframe_minutes": 60,
+  "spread_points": 280,
+  "params": {
+    "ema_fast": 9,
+    "ema_medium": 21,
+    "ema_trend": 50,
+    "ema_major": 200,
+    "rsi_period": 14,
+    "rsi_long_min": 40,
+    "rsi_long_max": 80,
+    "rsi_short_min": 20,
+    "rsi_short_max": 60,
+    "atr_period": 14,
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 3.0,
+    "atr_trail_mult": 0.5,
+    "volume_ma_period": 20,
+    "volume_mult": 0.8,
+    "max_hold_bars": 24,
+    "lot_pct": 300,
+    "running_pct": 0.05,
+    "no_ema200_filter": true,
+    "no_macd_filter": true,
+    "confidence_sizing": {
+      "enabled": true,
+      "thresholds": [
+        {"min_conf": 0, "max_conf": 2, "fraction": 1.0},
+        {"min_conf": 3, "max_conf": 4, "fraction": 1.8},
+        {"min_conf": 5, "max_conf": 7, "fraction": 2.5}
+      ],
+      "skip_conf_0": false
+    },
+    "confidence_factors": {
+      "h4_trend_confluence": 2,
+      "bb_squeeze": 1,
+      "volume_spike_1.2x": 1,
+      "rsi_extreme_bull_gt75": 1,
+      "rsi_extreme_bear_lt25": 1,
+      "london_session_07_14_utc": 1,
+      "ema200_side_confirmation": 1
+    }
+  },
+  "dynamic_lot": {
+    "enabled": true,
+    "base_lot_pct": 300,
+    "initial_modal": 12000000,
+    "min_lot_pct": 200,
+    "max_lot_pct": 800,
+    "adjust_frequency": "daily"
+  },
+  "risk_rules": [
+    "MAX_DD_15%: pause all",
+    "REDUCE_LOT_AT_DD_6%",
+    "TRAILING_STOP_AFTER_0.5ATR",
+    "MAX_HOLD_24_HOURS",
+    "CLOSE_ON_EMA_FLIP",
+    "CONFIDENCE_SIZING: 1.8x conf 3-4, 2.5x conf 5-7"
+  ],
+  "notes": "H1 Confidence Sizing BOOST. D base (EMA9/21 + RSI) tanpa MACD/EMA200 hard filter. Confidence: H4 trend +2, squeeze/volume/extreme/session/ema200 +1. Sizing 1.0/1.8/2.5x. Target Rp200k+/hari dengan spread 280 pts."
+}

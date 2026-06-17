@@ -1,0 +1,68 @@
+{
+  "name": "M15 Confidence Sizing",
+  "symbol": "XAUUSDm",
+  "timeframe": "M15",
+  "direction": "LONG_SHORT",
+  "timeframe_minutes": 15,
+  "params": {
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "ema_trend": 50,
+    "ema_major": 200,
+    "rsi_period": 14,
+    "rsi_long_min": 30,
+    "rsi_long_max": 95,
+    "rsi_short_min": 5,
+    "rsi_short_max": 70,
+    "macd_fast": 5,
+    "macd_slow": 13,
+    "macd_signal": 5,
+    "atr_period": 10,
+    "atr_sl_mult": 0.5,
+    "atr_tp_mult": 2.2,
+    "atr_trail_mult": 0.3,
+    "volume_ma_period": 15,
+    "volume_mult": 0.7,
+    "max_hold_bars": 20,
+    "lot_pct": 1000,
+    "running_pct": 0.12,
+    "no_ema200_filter": true,
+    "no_macd_filter": true,
+    "confidence_sizing": {
+      "enabled": true,
+      "thresholds": [
+        {"min_conf": 0, "max_conf": 2, "fraction": 1.0},
+        {"min_conf": 3, "max_conf": 4, "fraction": 1.5},
+        {"min_conf": 5, "max_conf": 6, "fraction": 2.0}
+      ],
+      "skip_conf_0": false
+    },
+    "confidence_factors": {
+      "h1_trend_confluence": 2,
+      "bb_squeeze": 1,
+      "volume_spike_1.2x": 1,
+      "rsi_extreme_bull_gt65": 1,
+      "rsi_extreme_bear_lt35": 1,
+      "london_session_07_14_utc": 1
+    }
+  },
+  "dynamic_lot": {
+    "enabled": true,
+    "base_lot_pct": 1000,
+    "initial_modal": 12000000,
+    "min_lot_pct": 400,
+    "max_lot_pct": 2000,
+    "adjust_frequency": "daily"
+  },
+  "risk_rules": [
+    "MAX_DD_20%: pause all",
+    "REDUCE_LOT_AT_DD_8%",
+    "TRAILING_STOP_AFTER_0.3ATR",
+    "MAX_HOLD_5_HOURS",
+    "CLOSE_ON_EMA_FLIP",
+    "NO_EMA200_FILTER",
+    "NO_MACD_FILTER",
+    "CONFIDENCE_SIZING: 1.5x conf 3-4, 2x conf 5-6"
+  ],
+  "notes": "M15 Confidence Sizing. F base + confidence scoring (H1 trend, BB squeeze, volume spike, RSI extreme, London session). Lot 1.5x untuk conf 3-4, 2x untuk conf 5-6. Target Rp500k/hari+."
+}

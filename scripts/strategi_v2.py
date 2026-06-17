@@ -8,6 +8,8 @@ import numpy as np
 
 SYMBOL = "XAUUSDm"
 MODAL = 5_000_000
+SPREAD_POINTS = 25
+POINT_VALUE = 0.01
 
 
 def init_mt5():
@@ -179,10 +181,14 @@ def run(df, modal_awal, fn, name):
                 posisi = "LONG"
                 entry_price = c
                 modal -= 10000
+                spread_cost = (SPREAD_POINTS * POINT_VALUE / entry_price) * modal
+                modal -= spread_cost
             elif sig == "SELL":
                 posisi = "SHORT"
                 entry_price = c
                 modal -= 10000
+                spread_cost = (SPREAD_POINTS * POINT_VALUE / entry_price) * modal
+                modal -= spread_cost
         else:
             sl_dist = a * 2.5
             tp_dist = a * 5.0

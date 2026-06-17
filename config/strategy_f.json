@@ -1,0 +1,50 @@
+{
+  "name": "M15 Turbo Scalper",
+  "symbol": "XAUUSDm",
+  "timeframe": "M15",
+  "direction": "LONG_SHORT",
+  "timeframe_minutes": 15,
+  "params": {
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "ema_trend": 50,
+    "ema_major": 200,
+    "rsi_period": 14,
+    "rsi_long_min": 30,
+    "rsi_long_max": 95,
+    "rsi_short_min": 5,
+    "rsi_short_max": 70,
+    "macd_fast": 5,
+    "macd_slow": 13,
+    "macd_signal": 5,
+    "atr_period": 10,
+    "atr_sl_mult": 0.5,
+    "atr_tp_mult": 2.2,
+    "atr_trail_mult": 0.3,
+    "volume_ma_period": 15,
+    "volume_mult": 0.7,
+    "max_hold_bars": 20,
+    "lot_pct": 800,
+    "running_pct": 0.12,
+    "no_ema200_filter": true,
+    "no_macd_filter": true
+  },
+  "dynamic_lot": {
+    "enabled": true,
+    "base_lot_pct": 800,
+    "initial_modal": 12000000,
+    "min_lot_pct": 300,
+    "max_lot_pct": 1500,
+    "adjust_frequency": "daily"
+  },
+  "risk_rules": [
+    "MAX_DD_20%: pause all",
+    "REDUCE_LOT_AT_DD_8%",
+    "TRAILING_STOP_AFTER_0.3ATR",
+    "MAX_HOLD_5_HOURS",
+    "CLOSE_ON_EMA_FLIP",
+    "NO_EMA200_FILTER",
+    "NO_MACD_FILTER"
+  ],
+  "notes": "M15 turbo scalper tanpa filter MACD/EMA200. RSI short 5-70 (diperlebar dari 15-70 biar sell kuat masuk). Target Rp300k/hari. EMA5/13 cross + RSI wide + volume. Hold ~45 menit, 16 sinyal/hari."
+}
