@@ -1,6 +1,6 @@
 # AI Handover — Trading Bot V1.0
 
-> Terakhir diupdate: 2026-06-18 03:55 WIB
+> Terakhir diupdate: 2026-06-18 04:20 WIB
 
 ## Project Goal
 Kembangkan & uji strategi trading multi-ticker (XAUUSDm, US30m, AUDUSDm, plus forex major) dengan AI Risk Manager, menggunakan MT5 akun Exness-MT5Trial6 (login: 413889745). MT5 harus dibuka manual sebelum Python jalan.
@@ -49,28 +49,28 @@ scripts/
 ### Ticker: US30m (Indeks, Point=0.1, Spread 23 pts, Target Rp150.000/hr)
 **Pendekatan:** Trend following (semua strategi mode=trend)
 
-| Label | Nama | TF | Rp/hr | DD | WR | Status |
-|---|---|---|---|---|---|---|
-| d | D H1 Confluence | H1 | Rp134,015 | 11% | 72% | Hampir target |
-| e | E H1 Donchian | H1 | Rp112,653 | 16% | 61% | Potensial |
-| b | B H4 EMA Cross | H4 | Rp93,705 | 6% | 70% | Stabil |
-| c | C H4 PSAR | H4 | Rp84,320 | 13% | 56% | Perlu tuning |
-| a | A D1 Long Bias | D1 | Rp74,332 | 4% | 65% | Stabil |
-| f | F M15 Turbo | M15 | Rp44,604 | 25% | 56% | Kena DD limit |
-| g | G M15 Confidence | M15 | Rp32,678 | 25% | 61% | Kena DD limit |
+| Label | Nama | TF | Rp/hr | PF | DD | WR | Status |
+|---|---|---|---|---|---|---|---|---|
+| d | D H1 Confluence | H1 | **Rp141,565** | 3.17 | 11% | 71% | ✅ Nyaris target (94%) |
+| e | E H1 Donchian | H1 | Rp125,719 | 2.13 | 17% | 59% | Potensial |
+| a | A D1 Long Bias | D1 | Rp96,219 | 2.49 | 3% | 65% | ✅ DD kecil, PF solid |
+| b | B H4 EMA Cross | H4 | Rp86,635 | 2.01 | 7% | 67% | Stabil |
+| c | C H4 PSAR | H4 | Rp84,363 | 1.64 | 13% | 56% | Perlu tuning |
+| f | F M15 Turbo | M15 | Rp44,132 | 2.29 | 25% | 56% | ❌ Kena DD limit |
+| g | G M15 Confidence | M15 | Rp32,350 | 1.76 | 25% | 60% | ❌ Kena DD limit |
 
 ### Ticker: AUDUSDm (Forex, Point=0.00001, Spread 11 pts, Target Rp100.000/hr)
 **Pendekatan:** Mean reversion (A-D) + trend (E-G)
 
-| Label | Nama | TF | Rp/hr | DD | WR | Status |
-|---|---|---|---|---|---|---|
-| e | E H1 Breakout | H1 | Rp73,339 | 15% | 67% | Terbaik AUD |
-| g | G M15 Confidence | M15 | Rp19,670 | 25% | 61% | Kena DD limit |
-| f | F M15 Scalp | M15 | Rp16,203 | 25% | 54% | Kena DD limit |
-| d | D H1 Confluence MR | H1 | Rp13,807 | 5% | 60% | MR terlalu ketat |
-| a | A D1 Range MR | D1 | Rp13,783 | 3% | 60% | MR terlalu ketat |
-| b | B H4 Mean Rev | H4 | Rp4,542 | 3% | 56% | MR terlalu ketat |
-| c | C H4 RSI Extreme | H4 | Rp3,452 | 2% | 59% | MR terlalu ketat |
+| Label | Nama | TF | Rp/hr | PF | DD | WR | Status |
+|---|---|---|---|---|---|---|---|
+| e | E H1 Breakout | H1 | Rp73,361 | 2.27 | 15% | 67% | Terbaik AUD |
+| g | G M15 Confidence | M15 | Rp19,357 | 1.68 | 25% | 61% | ❌ Kena DD limit |
+| f | F M15 Scalp | M15 | Rp15,980 | 1.83 | 25% | 54% | ❌ Kena DD limit |
+| d | D H1 Confluence MR | H1 | Rp13,807 | 2.22 | 5% | 60% | MR terlalu ketat |
+| a | A D1 Range MR | D1 | Rp13,783 | 2.13 | 3% | 60% | MR terlalu ketat |
+| b | B H4 Mean Rev | H4 | Rp4,542 | 1.55 | 3% | 56% | MR terlalu ketat |
+| c | C H4 RSI Extreme | H4 | Rp3,452 | 1.50 | 2% | 59% | MR terlalu ketat |
 
 ### XAUUSD (PAKEM — TIDAK DIUBAH)
 Semua strategi dan config XAUUSD tetap original. Folder `strategies/xauusd/` dan `config/XAUUSD/` tidak tersentuh.
@@ -83,27 +83,30 @@ Semua strategi dan config XAUUSD tetap original. Folder `strategies/xauusd/` dan
 - **Normalisasi key**: `no_macd_filter` → `no_macd`, `no_ema200_filter` → `no_ema200`, `conf_sizing` dari `confidence_sizing.thresholds`
 - **Config key fix**: G config sebelumnya pake `no_macd_filter` tapi code cek `no_macd` — bikin sinyal ke-block total
 - **prep_confidence fix**: Ganti hardcode parameter (`rsi_period`, `atr_period`, dll) jadi `.get()` dengan default
+- **Tuning US30m**: Update SL/TP/lot/running_pct di A, B, D, E:
+  - D H1 Confluence: Rp134k → **Rp141k** (SL 1.0 TP 3.0, PF 3.17)
+  - A D1 Long Bias: Rp74k → **Rp96k** (lot 500→600, SL 2.0→1.5)
+  - E H1 Donchian: Rp113k → **Rp126k**
+- **Commit `297dd6c`**: 36 files berubah, push ke main
 
 ## Issues / Blockers
 
 1. **H1 data terbatas**: MT5 trial cuma ngasih 2-3 hari H1 untuk symbol mini — hasil backtest H1 belum representatif.
 2. **AUDUSDm mean reversion**: Entry criteria terlalu ketat (BB + RSI + EMA triple filter) — perlu dilonggarkan.
-3. **M15 strategies kena 25% DD limit**: SL/TP masih perlu tuning untuk karakter masing-masing ticker.
+3. **M15 strategies kena 25% DD limit**: Semua parameter F M15 kena DD limit — M15 terlalu noise untuk US30m. Focus ke H1/H4.
 4. **EURUSDm, GBPUSDm, USDJPYm**: Belum punya config strategi.
 
 ## Cara Run
 
 ```powershell
 # Buka MT5 dulu, login, pastikan Market Watch aktif
-
-# Backtest semua ticker
 python scripts/backtest_multi_ticker.py
 ```
 
 ## Next Steps (Rekomendasi)
 
-1. Fine-tune parameter US30m D (H1 Confluence) — paling dekat target
-2. Longgarkan entry AUDUSDm mean reversion (hapus EMA condition di mode meanrev)
-3. Buat config untuk EURUSDm, GBPUSDm, USDJPYm
-4. Debug H1 data limited issue (coba `symbol_select()` atau cache data)
-5. Optimasi trailing stop biar M15 strategies gak kena DD limit terus
+1. **Fine-tune AUDUSDm**: Loosening mean reversion atau ganti approach
+2. **Testing D H1 Confluence**: Parameter optimal SL=1.0 TP=3.0 PF 3.17 — Rp141k dari target Rp150k
+3. **Buat config EURUSDm, GBPUSDm, USDJPYm** — pake template US30m/AUDUSDm
+4. **Debug H1 data** — coba cache data MT5 atau pake symbol lain
+5. **Live forward test** untuk H1 strategies (D, E) di US30m
