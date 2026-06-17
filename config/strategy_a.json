@@ -1,0 +1,31 @@
+{
+  "name": "Pullback SMA30 LONG Only",
+  "symbol": "XAUUSDm",
+  "timeframe": "D1",
+  "direction": "LONG_ONLY",
+  "params": {
+    "sma_entry": 30,
+    "sma_exit": 120,
+    "sma200": 200,
+    "rsi_max": 45,
+    "atr_pullback": 2.0,
+    "atr_stop": 3.0,
+    "max_hold_days": 90,
+    "running_pct": 0.15,
+    "ema_buffer": 0.03
+  },
+  "performance_3yr": {
+    "roi_pct": 135.37,
+    "max_dd_pct": 2.1,
+    "profit_factor": 18.28,
+    "win_rate_pct": 68.2,
+    "total_trades": 22,
+    "avg_hold_days": 22
+  },
+  "risk_rules": [
+    "MAX_DD_30%: pause all",
+    "REDUCE_LOT_AT_DD_10%",
+    "NEVER_SHORT",
+    "CUT_LOSS_AT_SMA_EXIT"
+  ]
+}

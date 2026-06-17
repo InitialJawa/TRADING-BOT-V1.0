@@ -1,0 +1,82 @@
+{
+  "ai_manager": {
+    "provider": {
+      "primary": "opencode_cli",
+      "fallback": "opencode_cli",
+      "opencode_cli": {
+        "model": "google/gemini-2.5-flash",
+        "timeout_seconds": 30
+      },
+      "gemini": {
+        "command": "gemini",
+        "timeout_seconds": 60
+      }
+    },
+    "audit": {
+      "interval_minutes": 15,
+      "drawdown_warning": 5.0,
+      "drawdown_critical": 10.0,
+      "sharpe_warning": 0.3,
+      "sharpe_critical": 0.1
+    },
+    "strategies": {
+      "pullback_sma30": {
+        "active": false,
+        "type": "LONG_ONLY",
+        "symbol": "XAUUSDm",
+        "timeframe": "D1",
+        "params": {
+          "sma_entry": 30,
+          "sma_exit": 120,
+          "sma200": 200,
+          "rsi_max": 45,
+          "atr_pullback": 2.0,
+          "atr_stop": 3.0,
+          "max_hold_days": 90,
+          "running_pct": 0.15
+        },
+        "performance_3yr": {
+          "roi_pct": 135.37,
+          "max_dd_pct": 2.1,
+          "profit_factor": 18.28,
+          "win_rate_pct": 68.2,
+          "total_trades": 22
+        }
+      },
+      "ema_cross_h4": {
+        "active": true,
+        "type": "LONG_SHORT",
+        "symbol": "XAUUSDm",
+        "timeframe": "H4",
+        "params": {
+          "ema_fast": 10,
+          "ema_slow": 30,
+          "rsi_min": 20,
+          "rsi_max": 80,
+          "vol_factor": 1.2,
+          "sl_atr": 1.5,
+          "max_hold_bars": 40,
+          "running_pct": 0.05,
+          "lot_pct": 350
+        },
+        "performance_4mo": {
+          "roi_pct": 33.61,
+          "max_dd_pct": 9.9,
+          "profit_factor": 3.28,
+          "win_rate_pct": 75.0,
+          "total_trades": 4
+        }
+      }
+    },
+    "telegram": {
+      "enabled": true,
+      "bot_token": "",
+      "chat_id": ""
+    },
+    "paths": {
+      "db": "data/state.db",
+      "error_log": "data/ai_errors.log",
+      "decision_log": "data/decisions.log"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "H4 EMA10/30 Cross",
+  "symbol": "XAUUSDm",
+  "timeframe": "H4",
+  "direction": "LONG_SHORT",
+  "params": {
+    "ema_fast": 10,
+    "ema_slow": 30,
+    "rsi_min": 20,
+    "rsi_max": 80,
+    "vol_factor": 1.2,
+    "sl_atr": 1.5,
+    "max_hold_bars": 40,
+    "running_pct": 0.05,
+    "lot_pct": 350
+  },
+  "performance_4mo": {
+    "roi_pct": 33.61,
+    "max_dd_pct": 9.9,
+    "profit_factor": 3.28,
+    "win_rate_pct": 75.0,
+    "total_trades": 4
+  },
+  "performance_full": {
+    "roi_pct": 89.86,
+    "max_dd_pct": 9.9,
+    "profit_factor": 4.65,
+    "win_rate_pct": 80.0,
+    "total_trades": 10
+  },
+  "risk_rules": [
+    "MAX_DD_30%: pause all",
+    "REDUCE_LOT_AT_DD_10%",
+    "EMA_REVERSAL_CLOSE",
+    "SL_1.5_ATR"
+  ]
+}

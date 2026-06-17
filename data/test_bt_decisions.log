@@ -1,0 +1,2 @@
+{"action": "pause_strategy", "target": "trend_re", "value": null, "status": "EXECUTED", "timestamp": "2026-06-17T11:58:43.241155+00:00", "message": "Strategy trend_re paused"}
+{"action": "alert_only", "target": null, "value": null, "status": "EXECUTED", "timestamp": "2026-06-17T11:58:43.253653+00:00", "message": "Alert raised, no system changes"}
