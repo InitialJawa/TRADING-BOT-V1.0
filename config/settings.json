@@ -66,6 +66,25 @@
           "win_rate_pct": 75.0,
           "total_trades": 4
         }
+      },
+      "psar_h4": {
+        "active": false,
+        "type": "LONG_SHORT",
+        "symbol": "XAUUSDm",
+        "timeframe": "H4",
+        "params": {
+          "lot_pct": 250,
+          "sl_atr": 2.5,
+          "max_hold_bars": 50,
+          "running_pct": 0.05
+        },
+        "performance_4mo": {
+          "roi_pct": 35.86,
+          "max_dd_pct": 0.0,
+          "profit_factor": 2.83,
+          "win_rate_pct": 64.7,
+          "total_trades": 17
+        }
       }
     },
     "telegram": {

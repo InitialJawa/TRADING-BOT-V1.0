@@ -1,0 +1,29 @@
+{
+  "name": "D5 Parabolic SAR",
+  "timeframe": "H4",
+  "direction": "LONG_SHORT",
+  "params": {
+    "lot_pct": 250,
+    "sl_atr": 2.5,
+    "max_hold_bars": 50,
+    "running_pct": 0.05
+  },
+  "performance": {
+    "4_month": {
+      "profit": 4302799,
+      "roi_pct": 35.86,
+      "drawdown_pct": 0.0,
+      "win_rate": 64.7,
+      "trades": 17
+    },
+    "full_period": {
+      "profit": 3563277,
+      "roi_pct": 29.69,
+      "drawdown_pct": 13.4,
+      "win_rate": 64.7,
+      "trades": 17
+    }
+  },
+  "signal_logic": "PSAR flip: when price closes above Parabolic SAR (and was below prev bar) + above EMA20 + volume spike = BUY. Reverse for SELL.",
+  "active": false
+}
