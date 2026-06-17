@@ -1,0 +1,11 @@
+{
+    "name": "USDJPYm",
+    "description": "USD/JPY Mini — spread 10 pts",
+    "spread": 10,
+    "point": 0.001,
+    "modal": 12000000,
+    "target_harian": 100000,
+    "currency": "JPY",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

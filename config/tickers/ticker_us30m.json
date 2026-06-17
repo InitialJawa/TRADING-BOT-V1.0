@@ -1,0 +1,11 @@
+{
+    "name": "US30m",
+    "description": "US30 Index Mini — spread 23 pts",
+    "spread": 23,
+    "point": 0.1,
+    "modal": 12000000,
+    "target_harian": 150000,
+    "currency": "USD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

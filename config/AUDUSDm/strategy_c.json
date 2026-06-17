@@ -1,0 +1,26 @@
+{
+  "name": "C H4 RSI Extreme",
+  "symbol": "AUDUSDm",
+  "timeframe": "H4",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "meanrev",
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "rsi_oversold": 20,
+    "rsi_overbought": 80,
+    "mr_atr_buffer": 0.5,
+    "atr_period": 14,
+    "atr_sl_mult": 2.0,
+    "atr_tp_mult": 2.0,
+    "atr_trail_mult": 0.5,
+    "volume_ma_period": 20,
+    "volume_mult": 0.5,
+    "max_hold_bars": 50,
+    "lot_pct": 120,
+    "running_pct": 0.1,
+    "no_ema200": true,
+    "no_macd": true
+  },
+  "risk_rules": ["MAX_DD_25%"]
+}

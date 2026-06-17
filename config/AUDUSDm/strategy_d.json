@@ -1,0 +1,26 @@
+{
+  "name": "D H1 Confluence MR",
+  "symbol": "AUDUSDm",
+  "timeframe": "H1",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "meanrev",
+    "ema_fast": 9,
+    "ema_medium": 21,
+    "rsi_oversold": 25,
+    "rsi_overbought": 75,
+    "mr_atr_buffer": 0.3,
+    "atr_period": 14,
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 2.0,
+    "atr_trail_mult": 0.4,
+    "volume_ma_period": 20,
+    "volume_mult": 0.7,
+    "max_hold_bars": 30,
+    "lot_pct": 100,
+    "running_pct": 0.12,
+    "no_ema200": true,
+    "no_macd": false
+  },
+  "risk_rules": ["TRAILING_STOP_AFTER_0.4ATR", "MAX_DD_20%"]
+}

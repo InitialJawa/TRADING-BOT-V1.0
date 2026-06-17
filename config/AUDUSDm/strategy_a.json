@@ -1,0 +1,26 @@
+{
+  "name": "A D1 Range MR",
+  "symbol": "AUDUSDm",
+  "timeframe": "D1",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "meanrev",
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "mr_atr_buffer": 0.3,
+    "atr_period": 14,
+    "atr_sl_mult": 2.5,
+    "atr_tp_mult": 2.0,
+    "atr_trail_mult": 0.5,
+    "volume_ma_period": 20,
+    "volume_mult": 0.7,
+    "max_hold_bars": 90,
+    "lot_pct": 200,
+    "running_pct": 0.1,
+    "no_ema200": true,
+    "no_macd": true
+  },
+  "risk_rules": ["MAX_DD_20%"]
+}

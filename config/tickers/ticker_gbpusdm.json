@@ -1,0 +1,11 @@
+{
+    "name": "GBPUSDm",
+    "description": "GBP/USD Mini — spread 10 pts",
+    "spread": 10,
+    "point": 0.00001,
+    "modal": 12000000,
+    "target_harian": 100000,
+    "currency": "USD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

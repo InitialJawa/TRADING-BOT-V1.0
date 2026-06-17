@@ -1,0 +1,37 @@
+{
+  "name": "G M15 Confidence",
+  "symbol": "AUDUSDm",
+  "timeframe": "M15",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "trend",
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "rsi_period": 14,
+    "rsi_long_min": 30,
+    "rsi_long_max": 95,
+    "rsi_short_min": 5,
+    "rsi_short_max": 70,
+    "atr_period": 10,
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 2.5,
+    "atr_trail_mult": 0.3,
+    "volume_ma_period": 15,
+    "volume_mult": 0.7,
+    "max_hold_bars": 20,
+    "lot_pct": 80,
+    "running_pct": 0.15,
+    "no_ema200": true,
+    "no_macd": true,
+    "confidence_sizing": {
+      "enabled": true,
+      "thresholds": [
+        {"min_conf": 0, "max_conf": 2, "fraction": 1.0},
+        {"min_conf": 3, "max_conf": 4, "fraction": 1.5},
+        {"min_conf": 5, "max_conf": 7, "fraction": 2.0}
+      ],
+      "skip_conf_0": false
+    }
+  },
+  "risk_rules": ["TRAILING_STOP_AFTER_0.3ATR", "MAX_DD_25%", "CONFIDENCE_SIZING"]
+}
