@@ -1,0 +1,27 @@
+{
+  "name": "C H4 PSAR",
+  "symbol": "XAGUSDm",
+  "timeframe": "H4",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "trend",
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "rsi_long_min": 0,
+    "rsi_long_max": 100,
+    "rsi_short_min": 0,
+    "rsi_short_max": 100,
+    "atr_period": 14,
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 4.0,
+    "atr_trail_mult": 0.5,
+    "volume_ma_period": 20,
+    "volume_mult": 0.7,
+    "max_hold_bars": 50,
+    "lot_pct": 120,
+    "running_pct": 0.05,
+    "no_ema200": true,
+    "no_macd": true
+  },
+  "risk_rules": ["TRAILING_STOP_AFTER_0.5ATR", "MAX_DD_25%"]
+}

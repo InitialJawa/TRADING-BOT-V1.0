@@ -1,0 +1,27 @@
+{
+  "name": "A D1 Nikkei Trend",
+  "symbol": "JP225m",
+  "timeframe": "D1",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "trend",
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "rsi_long_min": 30,
+    "rsi_long_max": 80,
+    "rsi_short_min": 20,
+    "rsi_short_max": 70,
+    "atr_period": 14,
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 4.0,
+    "atr_trail_mult": 0.4,
+    "volume_ma_period": 20,
+    "volume_mult": 0.8,
+    "max_hold_bars": 60,
+    "lot_pct": 600,
+    "running_pct": 0.05,
+    "no_ema200": true,
+    "no_macd": true
+  },
+  "risk_rules": ["TRAILING_STOP_AFTER_0.4ATR", "MAX_DD_20%"]
+}

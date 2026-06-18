@@ -10,6 +10,8 @@ from src.audit.risk_audit import RiskAudit
 from src.audit.backtest_audit import BacktestAudit
 from src.context_builder import ContextBuilder
 from src.provider.opencode_cli import query as opencode_query, parse_json_response
+from src.provider.ollama_fallback import OllamaFallback
+from src.agent_ipc import init_chat, add_message, build_debate_context, is_finished, increment_round, get_conversation_summary
 from src.override_handler import OverrideHandler
 from src.notification.telegram import TelegramNotifier
 
@@ -54,26 +56,95 @@ def run_cycle():
 
     ctx_json = json.dumps(ctx, separators=(",", ":"))
 
-    print("[CYCLE] Querying AI via OpenCode CLI...")
-    rules = "alert_only if normal, reduce_lot if DD>10% or lot>300, pause_strategy if Sharpe<0.1. FORBIDDEN: buy/sell/close/increase_lot"
-    raw_output = opencode_query(rules, ctx_json)
-    print(f"[CYCLE] Raw output: {raw_output[:200]}...")
+    ACION_PRIORITY = {"pause_strategy": 3, "reduce_lot": 2, "alert_only": 1}
+    MAX_DEBATE_ROUNDS = 2
 
-    print("[CYCLE] Parsing decision...")
-    decision = parse_json_response(raw_output)
+    def agent_prompt(agent_name, role_desc, rules):
+        return f"""You are {agent_name} — {role_desc}
 
-    if decision.get("action") in ("error", "parse_error"):
-        print(f"[CYCLE] Decision parsing failed: {decision.get('reason')}")
-        telegram.send(f"<b>AI PARSE FAILED</b>\nOutput: {raw_output[:300]}")
-        return {
-            "status": "PARSE_FAILED",
-            "raw": raw_output,
-            "audits": {"system": sys_audit, "risk": rsk_audit, "backtest": bt_audit}
-        }
+=== RULES ===
+{rules}
 
-    print(f"[CYCLE] Decision: {json.dumps(decision, indent=2)}")
+=== COMMUNICATION ===
+You share a chat file with AI-2. Read the debate log, then respond.
 
-    print("[CYCLE] Executing decision...")
+Write your message in this EXACT format:
+MSG_TO_AI2: <your argument for AI-2 to read>
+
+After your message, output your decision as JSON:
+FINAL_ACTION: {{"action":"<action>", "target":"<symbol>", "value":<number>, "reason":"<reason>"}}
+
+Allowed actions: alert_only, reduce_lot, pause_strategy
+FORBIDDEN: buy, sell, close, increase_lot, increase_leverage
+"""
+
+    def query_ai1(ctx_str, round_num):
+        prompt = agent_prompt("AI-1 (Risk Manager)", "conservative — prioritaskan safety, minimalisir drawdown, jaga modal", "alert_only if normal, reduce_lot if DD>10% or lot>300, pause_strategy if Sharpe<0.1")
+        full = f"{prompt}\n\nContext: {ctx_str}\n\nDebate round #{round_num}. Berikan argumen dan keputusanmu."
+        raw = opencode_query(full, "")
+        msg = extract_message(raw)
+        if msg:
+            add_message("AI-1", "AI-2", msg, round_num)
+        return raw
+
+    def query_ai2(ctx_str, round_num):
+        prompt = agent_prompt("AI-2 (Strategy Advisor)", "optimis — fokus pada performa strategi, peluang market, jangan pause kecuali darurat", "alert_only if normal, reduce_lot only if DD>15%, pause_strategy only if Sharpe<0.05 OR backtest failed")
+        chat_log = get_conversation_summary()
+        full = f"{prompt}\n\nContext: {ctx_str}\n\nDebate Log:\n{chat_log}\n\nDebate round #{round_num}. Baca argumen AI-1, berikan counter-argumen dan keputusanmu."
+        raw = opencode_query(full, "")
+        msg = extract_message(raw)
+        if msg:
+            add_message("AI-2", "AI-1", msg, round_num)
+        return raw
+
+    def extract_message(raw):
+        for line in raw.split("\n"):
+            if line.startswith("MSG_TO_AI2:"):
+                return line[len("MSG_TO_AI2:"):].strip()
+        return ""
+
+    def extract_final_action(raw):
+        for line in raw.split("\n"):
+            if line.startswith("FINAL_ACTION:"):
+                return parse_json_response(line[len("FINAL_ACTION:"):].strip())
+        return parse_json_response(raw)
+
+    init_chat(MAX_DEBATE_ROUNDS)
+
+    print("[CYCLE] ===== DEBATE ROUND 1 =====")
+    print("[CYCLE] Querying AI-1 (Risk Manager)...")
+    raw_1 = query_ai1(ctx_json, 1)
+    print(f"[CYCLE] AI-1 raw: {raw_1[:300]}...")
+
+    print("[CYCLE] Running AI-2 (Strategy Advisor) — membaca argumen AI-1...")
+    raw_2 = query_ai2(ctx_json, 1)
+    print(f"[CYCLE] AI-2 raw: {raw_2[:300]}...")
+
+    if MAX_DEBATE_ROUNDS >= 2:
+        increment_round()
+        print(f"[CYCLE] ===== DEBATE ROUND 2 =====")
+        print("[CYCLE] AI-1 menanggapi AI-2...")
+        raw_1 = query_ai1(ctx_json, 2)
+        print(f"[CYCLE] AI-1 rebuttal: {raw_1[:300]}...")
+
+        print("[CYCLE] AI-2 menanggapi AI-1...")
+        raw_2 = query_ai2(ctx_json, 2)
+        print(f"[CYCLE] AI-2 rebuttal: {raw_2[:300]}...")
+
+    print("[CYCLE] ===== DEBATE SELESAI =====")
+    d1 = extract_final_action(raw_1) or {"action": "alert_only", "reason": "AI-1 failed to produce valid action"}
+    d2 = extract_final_action(raw_2) or {"action": "alert_only", "reason": "AI-2 failed to produce valid action"}
+
+    p1 = ACION_PRIORITY.get(d1["action"], 0)
+    p2 = ACION_PRIORITY.get(d2["action"], 0)
+    decision = d1 if p1 >= p2 else d2
+    decision["_debate_log"] = get_conversation_summary()
+    decision["_d1_raw"] = d1["action"]
+    decision["_d2_raw"] = d2["action"]
+
+    print(f"[CYCLE] Final: AI-1={d1['action']} vs AI-2={d2['action']} → picked {decision['action']}")
+
+    print(f"[CYCLE] Executing decision: {json.dumps(decision, indent=2)}")
     result = handler.execute(decision)
 
     if telegram.enabled:
@@ -96,7 +167,8 @@ def run_cycle():
     print(f"[CYCLE] Complete: {json.dumps(result, indent=2)}")
     return {
         "status": "COMPLETE",
-        "provider": "opencode_cli",
+        "providers": {"ai1": "opencode_cli", "ai2": "ollama_fallback"},
+        "consensus": decision.get("_consensus", "unknown"),
         "decision": decision,
         "result": result,
         "audits": {"system": sys_audit, "risk": rsk_audit, "backtest": bt_audit}

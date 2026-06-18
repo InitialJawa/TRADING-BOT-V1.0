@@ -1,0 +1,11 @@
+{
+    "name": "JP225m",
+    "description": "Nikkei 225 — spread 64 pts",
+    "spread": 64,
+    "point": 0.1,
+    "modal": 12000000,
+    "target_harian": 150000,
+    "currency": "JPY",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

@@ -1,0 +1,11 @@
+{
+    "name": "UK100m",
+    "description": "FTSE 100 Index — spread 142 pts",
+    "spread": 142,
+    "point": 0.01,
+    "modal": 12000000,
+    "target_harian": 150000,
+    "currency": "GBP",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

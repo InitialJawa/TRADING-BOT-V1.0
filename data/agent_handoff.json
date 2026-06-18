@@ -1,0 +1,18 @@
+{
+  "task": {
+    "id": 3,
+    "title": "Live bot siap jalan — tinggal user yg start",
+    "description": "Live bot untuk 4 ticker unggulan sudah dibuat. User tinggal run.",
+    "assigned_to": "dev",
+    "priority": "medium"
+  },
+  "status": "done",
+  "result": "",
+  "feedback": "",
+  "notes": [
+    "Live bot: scripts/live_bot_4_ticker.py",
+    "Runner: scripts/run_live_bot.ps1 start|stop|log",
+    "Bot ngecek tiap 5 menit, manage trailing stop, open posisi baru"
+  ],
+  "round": 3
+}

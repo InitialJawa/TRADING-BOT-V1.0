@@ -1,0 +1,11 @@
+{
+    "name": "BTCUSDTm",
+    "description": "Bitcoin — spread 1000 pts",
+    "spread": 1000,
+    "point": 0.01,
+    "modal": 12000000,
+    "target_harian": 300000,
+    "currency": "USD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

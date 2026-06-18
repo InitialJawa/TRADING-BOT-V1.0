@@ -138,6 +138,18 @@ class StateManager:
         conn.commit()
         conn.close()
 
+    def get_avg_drawdown_7d(self) -> float:
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT value FROM metrics WHERE key = ? AND updated_at >= datetime('now', '-7 days') ORDER BY updated_at",
+            ("portfolio_drawdown",)
+        ).fetchall()
+        conn.close()
+        if not rows:
+            return 0.0
+        total = sum(r["value"] for r in rows)
+        return round(total / len(rows), 2)
+
     def log_decision(self, raw: str, action: str, target: str = None, value: float = None, status: str = "EXECUTED"):
         conn = self._get_conn()
         conn.execute(

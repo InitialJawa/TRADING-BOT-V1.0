@@ -1,0 +1,11 @@
+{
+    "name": "XAGUSDm",
+    "description": "Silver Mini — spread 35 pts",
+    "spread": 30,
+    "point": 0.001,
+    "modal": 12000000,
+    "target_harian": 200000,
+    "currency": "USD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

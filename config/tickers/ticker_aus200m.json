@@ -1,0 +1,11 @@
+{
+    "name": "AUS200m",
+    "description": "ASX 200 Index — spread 294 pts",
+    "spread": 294,
+    "point": 0.01,
+    "modal": 12000000,
+    "target_harian": 150000,
+    "currency": "AUD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

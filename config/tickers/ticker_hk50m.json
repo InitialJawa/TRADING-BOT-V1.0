@@ -1,0 +1,11 @@
+{
+    "name": "HK50m",
+    "description": "Hong Kong 50 Index — spread 148 pts",
+    "spread": 148,
+    "point": 0.1,
+    "modal": 12000000,
+    "target_harian": 150000,
+    "currency": "HKD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

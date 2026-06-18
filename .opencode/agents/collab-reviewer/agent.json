@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/schemas/agent.json",
+  "name": "collab-reviewer",
+  "version": "1.0.0",
+  "description": "AI Code Reviewer — me-review hasil kerja collab-dev via file handoff.",
+  "type": "task",
+  "instructions": "AGENTS.md",
+  "tools": [
+    "read",
+    "write",
+    "edit",
+    "bash",
+    "glob",
+    "grep"
+  ],
+  "rules": [
+    "BACA data/agent_handoff.json DULU sebelum bekerja — itu sumber kebenaran",
+    "Lihat task ketika status 'review_needed' dan assigned_to='reviewer'",
+    "Baca hasil kode di 'result', CEK file aslinya dengan read tool",
+    "Beri feedback di 'feedback' — jelaskan apa yang OK dan apa yang perlu diperbaiki",
+    "Kalo OK: set status ke 'done'. Kalo perlu revisi: set status ke 'feedback_given', assigned_to='dev'",
+    "JANGAN edit AGENTS.md atau agent config files"
+  ]
+}

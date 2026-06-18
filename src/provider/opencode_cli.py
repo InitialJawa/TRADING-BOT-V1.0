@@ -1,8 +1,12 @@
-import subprocess, json, os, sys, tempfile
+import subprocess, json, os, sys, tempfile, shutil
 
 MODEL = "google/gemini-2.5-flash"
 TEMP_DIR = os.path.join(tempfile.gettempdir(), "oc_ai_mgr")
-OPCODE_CMD = r"C:\Users\BedilGaib\AppData\Roaming\npm\opencode.cmd"
+
+_which = shutil.which("opencode") or shutil.which("opencode.cmd")
+OPCODE_CMD = _which if _which else r"C:\Users\Bedil Gaib\AppData\Roaming\npm\opencode.cmd"
+if not os.path.exists(OPCODE_CMD):
+    OPCODE_CMD = r"C:\Users\BedilGaib\AppData\Roaming\npm\opencode.cmd"
 
 def query(system_prompt, user_context, timeout=30):
     prompt_one_line = f"Rules: {system_prompt} | Data: {user_context} | Reply ONLY JSON:"
@@ -11,10 +15,10 @@ def query(system_prompt, user_context, timeout=30):
     if "GEMINI_API_KEY" in env and "GOOGLE_GENERATIVE_AI_API_KEY" not in env:
         env["GOOGLE_GENERATIVE_AI_API_KEY"] = env["GEMINI_API_KEY"]
     try:
+        cmd = f'"{OPCODE_CMD}" run "{prompt_one_line}" -m {MODEL} --pure'
         result = subprocess.run(
-            [OPCODE_CMD, "run", prompt_one_line, "-m", MODEL, "--pure"],
-            capture_output=True, text=True, timeout=timeout,
-            encoding="utf-8", errors="replace",
+            cmd, capture_output=True, text=True, timeout=timeout,
+            encoding="utf-8", errors="replace", shell=True,
             cwd=TEMP_DIR, env=env
         )
         out = result.stdout.strip()

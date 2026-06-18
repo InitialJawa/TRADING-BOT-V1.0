@@ -1,0 +1,11 @@
+{
+    "name": "US500m",
+    "description": "S&P 500 — spread 86 pts",
+    "spread": 86,
+    "point": 0.01,
+    "modal": 12000000,
+    "target_harian": 200000,
+    "currency": "USD",
+    "tf_primary": "M15",
+    "tf_secondary": "H1"
+}

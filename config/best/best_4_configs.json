@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-06-18 23:46",
+  "description": "Best strategy configs for 4 ticker unggulan",
+  "configs": [
+    {
+      "ticker": "XAGUSDm",
+      "strategy": "D H1 Confluence",
+      "params": {
+        "ema_fast": 9,
+        "ema_medium": 21,
+        "atr_sl_mult": 1.2,
+        "atr_tp_mult": 4.0,
+        "atr_trail_mult": 0.3,
+        "lot_pct": 100,
+        "running_pct": 0.1
+      },
+      "results": "Rp605,921/hr | PF 2.54 | DD 10.6% | ROI -8.0%",
+      "file": "config/XAGUSDm/strategy_d.json"
+    },
+    {
+      "ticker": "ETHUSDm",
+      "strategy": "D H1 Confluence",
+      "params": {
+        "ema_fast": 9,
+        "ema_medium": 21,
+        "atr_sl_mult": 1.5,
+        "atr_tp_mult": 4.0,
+        "atr_trail_mult": 0.4,
+        "lot_pct": 60,
+        "running_pct": 0.1
+      },
+      "results": "Rp468,118/hr | PF 2.05 | DD 11.5% | ROI -10.3%",
+      "file": "config/ETHUSDm/strategy_d.json"
+    },
+    {
+      "ticker": "BTCUSDTm",
+      "strategy": "D H1 Confluence",
+      "params": {
+        "ema_fast": 9,
+        "ema_medium": 21,
+        "atr_sl_mult": 2.0,
+        "atr_tp_mult": 3.5,
+        "atr_trail_mult": 0.4,
+        "lot_pct": 50,
+        "running_pct": 0.1
+      },
+      "results": "Rp437,474/hr | PF 2.65 | DD 4.0% | ROI -0.6%",
+      "file": "config/BTCUSDTm/strategy_d.json"
+    },
+    {
+      "ticker": "JP225m",
+      "strategy": "G M15 Confidence",
+      "params": {
+        "ema_fast": 5,
+        "ema_medium": 13,
+        "atr_sl_mult": 0.7,
+        "atr_tp_mult": 3.5,
+        "atr_trail_mult": 0.3,
+        "lot_pct": 120,
+        "running_pct": 0.12
+      },
+      "results": "Rp528,960/hr | PF 2.50 | DD 6.5% | ROI -5.3%",
+      "file": "config/JP225m/strategy_g.json"
+    }
+  ]
+}

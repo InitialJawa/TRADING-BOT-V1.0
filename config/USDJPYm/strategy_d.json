@@ -1,0 +1,29 @@
+{
+  "name": "D H1 Trend",
+  "symbol": "USDJPYm",
+  "timeframe": "H1",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "trend",
+    "ema_fast": 9,
+    "ema_medium": 21,
+    "rsi_long_min": 30,
+    "rsi_long_max": 80,
+    "rsi_short_min": 20,
+    "rsi_short_max": 70,
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 3.5,
+    "atr_trail_mult": 0.3,
+    "volume_ma_period": 20,
+    "volume_mult": 0.8,
+    "max_hold_bars": 30,
+    "lot_pct": 100,
+    "running_pct": 0.1,
+    "no_ema200": false,
+    "no_macd": false
+  },
+  "risk_rules": [
+    "TRAILING_STOP_AFTER_0.3ATR",
+    "MAX_DD_50%"
+  ]
+}

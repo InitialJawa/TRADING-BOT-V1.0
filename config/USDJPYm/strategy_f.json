@@ -1,0 +1,27 @@
+{
+  "name": "F M15 Scalp",
+  "symbol": "USDJPYm",
+  "timeframe": "M15",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "trend",
+    "ema_fast": 3,
+    "ema_medium": 7,
+    "rsi_long_min": 20,
+    "rsi_long_max": 80,
+    "rsi_short_min": 20,
+    "rsi_short_max": 80,
+    "atr_period": 10,
+    "atr_sl_mult": 1.0,
+    "atr_tp_mult": 2.0,
+    "atr_trail_mult": 0.3,
+    "volume_ma_period": 15,
+    "volume_mult": 0.7,
+    "max_hold_bars": 12,
+    "lot_pct": 40,
+    "running_pct": 0.15,
+    "no_ema200": true,
+    "no_macd": true
+  },
+  "risk_rules": ["TRAILING_STOP_AFTER_0.3ATR", "MAX_DD_25%"]
+}

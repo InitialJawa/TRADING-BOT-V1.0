@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/schemas/agent.json",
+  "name": "collab-dev",
+  "version": "1.0.0",
+  "description": "AI Developer — mengerjakan task coding. Berkolaborasi dengan collab-reviewer via file handoff.",
+  "type": "task",
+  "instructions": "AGENTS.md",
+  "tools": [
+    "read",
+    "write",
+    "edit",
+    "bash",
+    "glob",
+    "grep"
+  ],
+  "rules": [
+    "BACA data/agent_handoff.json DULU sebelum bekerja — itu sumber kebenaran",
+    "Kerjakan task yang assigned_to='dev' dan status 'pending' atau 'feedback_given'",
+    "Setelah selesai: update status ke 'review_needed', tulis hasil di 'result'",
+    "Tunggu reviewer ngasih feedback, iterasi sampe disetujui",
+    "Kalau disetujui: update status ke 'done'",
+    "JANGAN edit AGENTS.md atau agent config files"
+  ]
+}

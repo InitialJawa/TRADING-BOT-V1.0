@@ -1,0 +1,27 @@
+{
+  "name": "E H1 Breakout",
+  "symbol": "USDJPYm",
+  "timeframe": "H1",
+  "direction": "LONG_SHORT",
+  "params": {
+    "mode": "trend",
+    "ema_fast": 5,
+    "ema_medium": 13,
+    "rsi_long_min": 25,
+    "rsi_long_max": 85,
+    "rsi_short_min": 15,
+    "rsi_short_max": 75,
+    "atr_period": 14,
+    "atr_sl_mult": 2.5,
+    "atr_tp_mult": 5.0,
+    "atr_trail_mult": 0.4,
+    "volume_ma_period": 20,
+    "volume_mult": 1.3,
+    "max_hold_bars": 30,
+    "lot_pct": 50,
+    "running_pct": 0.1,
+    "no_ema200": true,
+    "no_macd": true
+  },
+  "risk_rules": ["TRAILING_STOP_AFTER_0.4ATR", "MAX_DD_20%"]
+}
