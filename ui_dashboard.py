@@ -15,14 +15,13 @@ positions_cache = []
 account_cache = {}
 last_refresh = None
 
-TICKERS = ["XAGUSDm", "ETHUSDm", "BTCUSDTm", "JP225m"]
-STRAT_LABEL = {"XAGUSDm":"D","ETHUSDm":"D","BTCUSDTm":"D","JP225m":"G"}
+TICKERS = ["XAGUSDm", "XAUUSDm", "JP225m"]
+STRAT_LABEL = {"XAGUSDm":"I","XAUUSDm":"I","JP225m":"I"}
 
 REASON_MAP = {
-    "XAGUSDm": "Hold karena trend bearish sedang diprediksi",
-    "ETHUSDm": "Hold karena breakout bullish",
-    "BTCUSDTm": "Hold karena sinyal momentum",
-    "JP225m": "Hold karena konfirmasi London session"
+    "XAGUSDm": "Stage analysis: S2 buy / S4 sell",
+    "XAUUSDm": "Stage analysis: S2 buy / S4 sell",
+    "JP225m": "Stage analysis: S2 buy / S4 sell"
 }
 
 def clear():

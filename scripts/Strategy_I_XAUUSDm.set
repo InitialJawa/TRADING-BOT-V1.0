@@ -1,0 +1,23 @@
+; Strategy I Backtest Settings - XAUUSDm (Gold)
+; Load in MT5 Strategy Tester -> Properties -> Load
+
+; === Strategy Parameters ===
+InpRiskPct=0.5
+InpATRSLMult=1.5
+InpATRTrailMult=0.8
+InpTrailSLMul=1.5
+InpStageThresh=0.0004
+InpVolMult=0.8
+InpMagic=123456
+
+; === Indicator Periods ===
+InpEMAFast=9
+InpEMAMedium=21
+InpEMATrend=50
+InpEMAMajor=200
+InpRSIPeriod=14
+InpATRPeriod=14
+InpVolMAPeriod=20
+
+; === Risk Control ===
+InpStopOutDD=25

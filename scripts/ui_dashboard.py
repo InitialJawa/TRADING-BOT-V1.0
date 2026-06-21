@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import MetaTrader5 as mt5
 import pandas as pd
 import numpy as np
-from strategies.shared.indicators import ema, sma, atr, rsi, macd
+from strategies.shared.stage_analysis import prep_stage, detect_stage, signal_stage_enhanced, confidence_score
 
 BOT_SCRIPT = os.path.join(os.path.dirname(__file__), "live_bot_4_ticker.py")
 LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
@@ -15,62 +15,30 @@ bot_process = None
 bot_running = False
 
 TICKERS = [
-    {"n":"XAGUSDm","s":"D","t":"H1","p":{"mode":"trend","ema_fast":9,"ema_medium":21,"rsi_long_min":30,"rsi_long_max":80,"rsi_short_min":20,"rsi_short_max":70,"atr_period":14,"atr_sl_mult":1.2,"atr_tp_mult":4.0,"atr_trail_mult":0.3,"volume_ma_period":20,"volume_mult":0.8,"max_hold_bars":30,"lot_pct":100,"running_pct":0.1,"no_ema200":False,"no_macd":False}},
-    {"n":"ETHUSDm","s":"D","t":"H1","p":{"mode":"trend","ema_fast":9,"ema_medium":21,"rsi_long_min":30,"rsi_long_max":80,"rsi_short_min":20,"rsi_short_max":70,"atr_period":14,"atr_sl_mult":1.5,"atr_tp_mult":4.0,"atr_trail_mult":0.4,"volume_ma_period":20,"volume_mult":1.0,"max_hold_bars":24,"lot_pct":60,"running_pct":0.1,"no_ema200":False,"no_macd":False}},
-    {"n":"BTCUSDTm","s":"D","t":"H1","p":{"mode":"trend","ema_fast":9,"ema_medium":21,"rsi_long_min":30,"rsi_long_max":80,"rsi_short_min":20,"rsi_short_max":70,"atr_period":14,"atr_sl_mult":2.0,"atr_tp_mult":3.5,"atr_trail_mult":0.4,"volume_ma_period":20,"volume_mult":1.0,"max_hold_bars":24,"lot_pct":50,"running_pct":0.1,"no_ema200":False,"no_macd":False}},
-    {"n":"JP225m","s":"G","t":"M15","p":{"mode":"trend","ema_fast":5,"ema_medium":13,"rsi_long_min":30,"rsi_long_max":95,"rsi_short_min":5,"rsi_short_max":70,"atr_period":10,"atr_sl_mult":0.7,"atr_tp_mult":3.5,"atr_trail_mult":0.3,"volume_ma_period":15,"volume_mult":0.7,"max_hold_bars":20,"lot_pct":120,"running_pct":0.12,"no_ema200":True,"no_macd":True}},
+    {"n":"XAGUSDm","t":"H1",
+     "p":{"ema_fast":9,"ema_medium":21,"ema_trend":50,"ema_major":200,"rsi_period":14,"atr_period":14,
+          "atr_sl_mult":1.2,"atr_trail_mult":0.8,"trail_sl_mul":1.5,"volume_ma_period":20,"volume_mult":0.8,
+          "running_pct":0.1,"stage_slope_threshold":0.0004,"lot_pct":100,"fee":0,
+          "conf_sizing":[(0,2,1.0),(3,4,1.5),(5,7,2.0)],
+          "confidence_factors":{"h4":2,"session":1,"volume":1,"rsi":1,"squeeze":1,"ema200":1}}},
+    {"n":"XAUUSDm","t":"H1",
+     "p":{"ema_fast":9,"ema_medium":21,"ema_trend":50,"ema_major":200,"rsi_period":14,"atr_period":14,
+          "atr_sl_mult":1.5,"atr_trail_mult":0.8,"trail_sl_mul":1.5,"volume_ma_period":20,"volume_mult":0.8,
+          "running_pct":0.1,"stage_slope_threshold":0.0004,"lot_pct":100,"fee":0,
+          "conf_sizing":[(0,2,1.0),(3,4,1.5),(5,7,2.0)],
+          "confidence_factors":{"h4":2,"session":1,"volume":1,"rsi":1,"squeeze":1,"ema200":1}}},
+    {"n":"JP225m","t":"H1",
+     "p":{"ema_fast":9,"ema_medium":21,"ema_trend":50,"ema_major":200,"rsi_period":14,"atr_period":14,
+          "atr_sl_mult":1.0,"atr_trail_mult":0.8,"trail_sl_mul":1.5,"volume_ma_period":20,"volume_mult":0.8,
+          "running_pct":0.1,"stage_slope_threshold":0.0005,"lot_pct":100,"fee":0,
+          "conf_sizing":[(0,2,1.0),(3,4,1.5),(5,7,2.0)],
+          "confidence_factors":{"h4":2,"session":1,"volume":1,"rsi":1,"squeeze":1,"ema200":1}}},
 ]
+
+STAGE_LABEL = {1:"ACCUM",2:"TREND+",3:"DISTR",4:"TREND-"}
 
 def clr():
     os.system("cls" if os.name == "nt" else "clear")
-
-def prep(df, p):
-    ef, em = p["ema_fast"], p["ema_medium"]
-    df[f"e{ef}"] = ema(df["close"], ef); df[f"e{em}"] = ema(df["close"], em)
-    df["e50"] = ema(df["close"], p.get("ema_trend", 50))
-    df["e200"] = ema(df["close"], p.get("ema_major", 200))
-    df["a"] = atr(df, p.get("atr_period", 14))
-    df["r"] = rsi(df["close"], p.get("rsi_period", 14))
-    if not p.get("no_macd", False):
-        df["m"], df["ms"] = macd(df["close"], 12, 26, 9)
-    else:
-        df["m"] = 0; df["ms"] = 0
-    df["v"] = sma(df["tick_volume"], p.get("volume_ma_period", 20))
-    df.dropna(inplace=True); return df
-
-def sig(df, i, p):
-    try:
-        row=df.iloc[i]; c=float(row["close"])
-        ef,em=f"e{p['ema_fast']}",f"e{p['ema_medium']}"
-        eb=float(row[ef])>float(row[em]); es=float(row[ef])<float(row[em])
-        a2=c>float(row["e200"]) if not p.get("no_ema200",False) else True
-        rsiv=float(row["r"])
-        rl=p.get("rsi_long_min",30)<=rsiv<=p.get("rsi_long_max",80)
-        rs=p.get("rsi_short_min",20)<=rsiv<=p.get("rsi_short_max",80)
-        mv,msv=float(row["m"]),float(row["ms"])
-        mb=p.get("no_macd",False) or mv>msv
-        ms2=p.get("no_macd",False) or mv<msv
-        vo=float(row["tick_volume"])>float(row["v"])*p.get("volume_mult",1.0)
-        if a2 and eb and rl and mb and vo: return "BUY"
-        if (not a2) and es and rs and ms2 and vo: return "SELL"
-        return "HOLD"
-    except: return "N/A"
-
-def whyno(df, i, p):
-    try:
-        row=df.iloc[i]; c=float(row["close"])
-        ef,em=f"e{p['ema_fast']}",f"e{p['ema_medium']}"
-        r=[]
-        a2=c>float(row["e200"]) if not p.get("no_ema200",False) else True
-        if not a2: r.append("<200")
-        if not float(row[ef])>float(row[em]): r.append("ema")
-        rsiv=float(row["r"])
-        if not (p.get("rsi_long_min",30)<=rsiv<=p.get("rsi_long_max",80)): r.append("rsi")
-        mv,msv=float(row["m"]),float(row["ms"])
-        if not (p.get("no_macd",False) or mv>msv): r.append("macd")
-        if not (float(row["tick_volume"])>float(row["v"])*p.get("volume_mult",1.0)): r.append("vol")
-        return ",".join(r) if r else "ready"
-    except: return "err"
 
 def get_data():
     r={"pos":[],"sig":[],"hist":[],"ac":{}}
@@ -91,29 +59,35 @@ def get_data():
                 seen.add(d.symbol)
             if len(r["hist"])>=8: break
         for tc in TICKERS:
-            si={"s":tc["n"],"st":tc["s"],"tf":tc["t"],"sg":"N/A","tr":"?","rsi":0,"vp":"?","mac":"?","rs":"nd","hp":False}
+            si={"s":tc["n"],"st":"I","tf":tc["t"],"sg":"N/A","tr":"?","rsi":0,"stage":0,"conf":0,"frac":1.0,"hp":False}
             try:
-                tf=mt5.TIMEFRAME_H1 if tc["t"]=="H1" else mt5.TIMEFRAME_M15
-                rates=mt5.copy_rates_from_pos(tc["n"],tf,0,300)
+                rates=mt5.copy_rates_from_pos(tc["n"],mt5.TIMEFRAME_H1,0,500)
                 if rates is not None and len(rates)>100:
                     df=pd.DataFrame(rates); df["time"]=pd.to_datetime(df["time"],unit="s"); df.set_index("time",inplace=True)
-                    df=prep(df,tc["p"])
+                    h4r=mt5.copy_rates_from_pos(tc["n"],mt5.TIMEFRAME_H4,0,125)
+                    dh4=None
+                    if h4r is not None and len(h4r)>50:
+                        dh4=pd.DataFrame(h4r); dh4["time"]=pd.to_datetime(dh4["time"],unit="s"); dh4.set_index("time",inplace=True)
+                    df=prep_stage(df,dh4,tc["p"])
                     if len(df)>5:
-                        l=df.iloc[-1]; ef,em=f"e{tc['p']['ema_fast']}",f"e{tc['p']['ema_medium']}"
-                        si["tr"]="U" if l[ef]>l[em] else "D"
-                        si["rsi"]=float(round(l["r"],0)) if not pd.isna(l["r"]) else 0
-                        si["mac"]="B" if float(l["m"])>float(l["ms"]) else "b"
-                        si["vp"]="H" if float(l["tick_volume"])>float(l["v"]) else "L"
+                        l=df.iloc[-1]
+                        st=detect_stage(l,tc["p"].get("stage_slope_threshold",0.0004))
+                        si["stage"]=st; si["tr"]="U" if l["ema9"]>l["ema21"] else "D"
+                        si["rsi"]=float(round(l["rsi"],0)) if not pd.isna(l["rsi"]) else 0
                         si["c"]=float(round(l["close"],2))
-                        si["e1"]=float(round(l[ef],1)); si["e2"]=float(round(l[em],1))
-                        s2=sig(df,-1,tc["p"]); si["sg"]=s2
-                        si["rs"]=whyno(df,-1,tc["p"])
+                        si["e1"]=float(round(l["ema9"],1)); si["e2"]=float(round(l["ema21"],1))
+                        s2=signal_stage_enhanced(df,-1,tc["p"]); si["sg"]=s2
+                        conf=confidence_score(l,tc["p"].get("confidence_factors",None))
+                        si["conf"]=conf
+                        frac=1.0
+                        for lo,hi,fv in tc["p"].get("conf_sizing",[(0,2,1.0),(3,4,1.5),(5,7,2.0)]):
+                            if lo<=conf<=hi: frac=fv; break
+                        si["frac"]=frac
                         if s2!="HOLD":
-                            sv=float(l["a"])*tc["p"]["atr_sl_mult"]; tv=float(l["a"])*tc["p"]["atr_tp_mult"]
+                            sv=float(l["atr"])*tc["p"]["atr_sl_mult"]
                             si["sl"]=round(float(l["close"])-sv,2) if s2=="BUY" else round(float(l["close"])+sv,2)
-                            si["tp"]=round(float(l["close"])+tv,2) if s2=="BUY" else round(float(l["close"])-tv,2)
             except Exception as et:
-                si["rs"]=f"err:{str(et)[:40]}"
+                si["sg"]=f"err:{str(et)[:40]}"
             for p in r["pos"]:
                 if p["s"]==tc["n"]: si["hp"]=True; si["pt"]=p["t"]; si["pp"]=p["pnl"]; si["pe"]=p["e"]
             r["sig"].append(si)
@@ -125,11 +99,8 @@ def draw():
     clr()
     d=get_data()
     ac=d["ac"]; pos=d["pos"]; sigs=d["sig"]; hist=d["hist"]
-    
     now=datetime.now().strftime("%Y-%m-%d %H:%M")
-    
-    # Header
-    print(f"\n  === TRADING BOT === {now}")
+    print(f"\n  === TRADING BOT — STRATEGY I (Stage Analysis) === {now}")
     b=e=pfl=0
     if "err" not in ac:
         b=ac.get("b",0); e=ac.get("e",0); pfl=ac.get("p",0)
@@ -138,9 +109,7 @@ def draw():
     else:
         print(f"  [WARN] {ac['err']}")
     print()
-    
-    # Strategy status
-    print(f"  {'Ticker':<10} {'S':<4} {'Status':<9} {'Trend':<5} {'RSI':<4} {'Signal':<7} {'Entry':>10} {'PnL':>12}")
+    print(f"  {'Ticker':<10} {'Stage':<7} {'Trend':<5} {'Conf':<5} {'RSI':<4} {'Signal':<7} {'Entry':>10} {'PnL':>12}")
     print(f"  {'-'*62}")
     for s in sigs:
         tf="--HOLD"; pnl_f="---"; entry="---"
@@ -149,25 +118,20 @@ def draw():
             pnl=s.get("pp",0)
             pnl_f=f"+Rp{pnl:,}" if pnl>=0 else f"Rp{pnl:,}"
             entry=s.get("pe","---")
-        tr=s["tr"]
-        tr_d="^U" if tr=="U" else "vD"
+        tr=s["tr"]; tr_d="^U" if tr=="U" else "vD"
+        st_l=STAGE_LABEL.get(s["stage"],"?")
+        conf=s.get("conf",0); frac=s.get("frac",1.0)
+        conf_s=f"{conf}x{frac:.1f}"
         rv=s.get("rsi",0)
         r_d=f"v{rv:.0f}" if rv<=30 else f"^{rv:.0f}" if rv>=70 else f"{rv:.0f}"
-        sg=s["sg"]
-        sg_d="BUY" if sg=="BUY" else "SELL" if sg=="SELL" else "---"
-        print(f"  {s['s']:<10} {s['st']+s['tf']:<4} {tf:<9} {tr_d:<5} {r_d:<4} {sg_d:<7} {str(entry):>10} {pnl_f:>12}")
-    
-    # Market detail
+        sg=s["sg"]; sg_d="BUY" if sg=="BUY" else "SELL" if sg=="SELL" else "---"
+        print(f"  {s['s']:<10} {st_l:<7} {tr_d:<5} {conf_s:<5} {r_d:<4} {sg_d:<7} {str(entry):>10} {pnl_f:>12}")
     print(f"\n  Market:")
     for s in sigs:
         if s.get("c"):
             ema_s=f"{s.get('e1','?')}/{s.get('e2','?')}"
-            sl=s.get("sl","---"); tp=s.get("tp","---")
-            sl_s=f"{sl:.2f}" if isinstance(sl,float) else "---"
-            tp_s=f"{tp:.2f}" if isinstance(tp,float) else "---"
-            print(f"  {s['s']:<10} {s['c']:>9} {s['mac']:<4} {s['vp']:<4} SL:{sl_s:<9} TP:{tp_s:<9} {s['rs']}")
-    
-    # History
+            sl_s=f"{s.get('sl',0):.2f}" if isinstance(s.get('sl'),float) else "---"
+            print(f"  {s['s']:<10} {s['c']:>9}  EMA:{ema_s:<14} SL:{sl_s}")
     if hist:
         print(f"\n  History:")
         for h in hist:
@@ -175,8 +139,6 @@ def draw():
             pf_s=f"+Rp{pf_h:,}" if pf_h>=0 else f"Rp{pf_h:,}"
             rs="TP" if pf_h>0 else ("SL" if pf_h<0 else "---")
             print(f"  {h['s']:<10} {h['t']:<3} {h['p']:>10.2f} {pf_s:>12} {rs:<5} {h['tm']}")
-    
-    # Bot control
     bot_s="*RUNNING" if bot_running else "STOPPED"
     print(f"\n  Bot: {bot_s}")
     print(f"  [1]Start [2]Stop [3]Refresh [4]Log [5]CloseAll")
@@ -203,8 +165,8 @@ def open_pos(sym,side):
     s=mt5.symbol_info(sym); tick=mt5.symbol_info_tick(sym)
     price=tick.ask if side=="BUY" else tick.bid
     sl=price-s.point*500 if side=="BUY" else price+s.point*500
-    tp=price+s.point*1500 if side=="BUY" else price-s.point*1500
-    req={"action":mt5.TRADE_ACTION_DEAL,"symbol":sym,"volume":s.volume_min,"type":mt5.ORDER_TYPE_BUY if side=="BUY" else mt5.ORDER_TYPE_SELL,"price":price,"sl":sl,"tp":tp,"deviation":10,"magic":123456,"comment":"manual"}
+    tp=0
+    req={"action":mt5.TRADE_ACTION_DEAL,"symbol":sym,"volume":s.volume_min,"type":mt5.ORDER_TYPE_BUY if side=="BUY" else mt5.ORDER_TYPE_SELL,"price":price,"sl":sl,"tp":tp,"deviation":10,"magic":123456,"comment":"manual_I"}
     r=mt5.order_send(req); mt5.shutdown()
     print(f"  {'[OK]' if r.retcode==10009 else '[FAIL]'} {sym} {side}"); time.sleep(1)
 
