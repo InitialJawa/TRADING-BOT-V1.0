@@ -1,5 +1,7 @@
-import subprocess, os, tempfile
-OPCODE = r"C:\Users\BedilGaib\AppData\Roaming\npm\opencode.cmd"
+import subprocess, os, tempfile, shutil
+OPCODE = os.environ.get("OPCODE_CMD") or shutil.which("opencode") or shutil.which("opencode.cmd")
+if not OPCODE:
+    raise SystemExit("opencode not found. Set OPCODE_CMD env var or add to PATH.")
 prompt = 'Balas HANYA JSON: {"status":"ok"}'
 env = os.environ.copy()
 env["GOOGLE_GENERATIVE_AI_API_KEY"] = env.get("GEMINI_API_KEY", "")

@@ -1,9 +1,11 @@
 import json, requests, os, sys
 from datetime import datetime
 
-API_KEY = "sk-An6m3aRKHDYTrZXJIqiPEJjJo8kHatERQXLHgivDOMVw9sdllSUiH2mOHnR6Tcwy"
-BASE_URL = "https://opencode.ai/zen/v1/chat/completions"
-MODEL = "minimax-m2.5-free"
+API_KEY = os.environ.get("OPENCODE_API_KEY") or os.environ.get("OPENAI_API_KEY")
+if not API_KEY:
+    raise RuntimeError("OPENCODE_API_KEY or OPENAI_API_KEY environment variable not set")
+BASE_URL = os.environ.get("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1/chat/completions")
+MODEL = os.environ.get("OPENCODE_MODEL", "minimax-m2.5-free")
 
 def query(system_prompt, user_context, timeout=30):
     payload = {

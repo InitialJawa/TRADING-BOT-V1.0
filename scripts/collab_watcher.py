@@ -19,11 +19,9 @@ POLL_INTERVAL = 10  # detik
 DEV_AGENT = "collab-dev"
 REVIEWER_AGENT = "collab-reviewer"
 
-OPCODE_CMD = shutil.which("opencode") or shutil.which("opencode.cmd")
+OPCODE_CMD = os.environ.get("OPCODE_CMD") or shutil.which("opencode") or shutil.which("opencode.cmd")
 if not OPCODE_CMD:
-    OPCODE_CMD = r"C:\Users\Bedil Gaib\AppData\Roaming\npm\opencode.cmd"
-    if not os.path.exists(OPCODE_CMD):
-        OPCODE_CMD = r"C:\Users\BedilGaib\AppData\Roaming\npm\opencode.cmd"
+    raise RuntimeError("opencode not found in PATH. Install it or set OPCODE_CMD env var.")
 
 
 def load_handoff():

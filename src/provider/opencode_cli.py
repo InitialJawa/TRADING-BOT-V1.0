@@ -3,10 +3,9 @@ import subprocess, json, os, sys, tempfile, shutil
 MODEL = "google/gemini-2.5-flash"
 TEMP_DIR = os.path.join(tempfile.gettempdir(), "oc_ai_mgr")
 
-_which = shutil.which("opencode") or shutil.which("opencode.cmd")
-OPCODE_CMD = _which if _which else r"C:\Users\Bedil Gaib\AppData\Roaming\npm\opencode.cmd"
-if not os.path.exists(OPCODE_CMD):
-    OPCODE_CMD = r"C:\Users\BedilGaib\AppData\Roaming\npm\opencode.cmd"
+OPCODE_CMD = os.environ.get("OPCODE_CMD") or shutil.which("opencode") or shutil.which("opencode.cmd")
+if not OPCODE_CMD:
+    raise RuntimeError("opencode not found in PATH. Install it or set OPCODE_CMD env var.")
 
 def query(system_prompt, user_context, timeout=30):
     prompt_one_line = f"Rules: {system_prompt} | Data: {user_context} | Reply ONLY JSON:"

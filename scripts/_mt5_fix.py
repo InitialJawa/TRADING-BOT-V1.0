@@ -1,8 +1,8 @@
 import MetaTrader5 as mt5
 import os, time, subprocess
 
-path = r"C:\Program Files\MetaTrader 5\terminal64.exe"
-data_path = r"C:\Users\Bedil Gaib\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075"
+path = os.environ.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+data_path = os.environ.get("MT5_DATA_PATH", "")
 
 print("1. Starting MT5 terminal...")
 proc = subprocess.Popen([path])

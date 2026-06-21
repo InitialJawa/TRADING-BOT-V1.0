@@ -327,7 +327,8 @@ def backtest(df, strat_cfg, ticker_cfg, strategy_label):
     peak = modal; dd_max = 0.0
     trades = []; in_trade = False; posisi = None
     entry_price = 0.0; entry_idx = 0; sl_price = 0.0; tp_price = 0.0; trail = False
-    daily_pnl = {}; current_day = None; day_pnl = 0.0; modal_at_entry = 0.0
+    daily_pnl = {}; current_day = None; day_start_equity = modal; modal_at_entry = 0.0
+    unrealized_pnl = 0.0
     is_confidence = strategy_label == "g"
     conf_fn = confidence_G if strategy_label == "g" else confidence_H
     ef_tag = f"ema{p['ema_fast']}"; em_tag = f"ema{p['ema_medium']}"
@@ -339,13 +340,19 @@ def backtest(df, strat_cfg, ticker_cfg, strategy_label):
         sig = signal_any(df, i, p)
         day = df.index[i].date()
 
-        if current_day is None: current_day = day
+        if current_day is None:
+            current_day = day
+            day_start_equity = modal + unrealized_pnl
         if day != current_day:
-            daily_pnl[current_day] = day_pnl; current_day = day; day_pnl = 0.0
+            equity = modal + unrealized_pnl
+            daily_pnl[current_day] = equity - day_start_equity
+            current_day = day
+            day_start_equity = equity
 
-        if modal > peak: peak = modal
-        dd = (peak - modal) / peak * 100; dd_max = max(dd_max, dd)
-        if dd > p["dd_limit"]: in_trade = False; posisi = None; continue
+        equity = modal + unrealized_pnl
+        if equity > peak: peak = equity
+        dd = (peak - equity) / peak * 100; dd_max = max(dd_max, dd)
+        if dd > p["dd_limit"]: unrealized_pnl = 0.0; in_trade = False; posisi = None; continue
 
         if is_confidence:
             conf = conf_fn(df.iloc[i])
@@ -359,6 +366,7 @@ def backtest(df, strat_cfg, ticker_cfg, strategy_label):
                 sl_price = c - a * p["atr_sl_mult"] if sig == "BUY" else c + a * p["atr_sl_mult"]
                 tp_price = c + a * p["atr_tp_mult"] if sig == "BUY" else c - a * p["atr_tp_mult"]
                 trail = False
+                unrealized_pnl = 0.0
                 modal -= 5000 * frac
                 spread_cost = (spread_pts * point_val / entry_price) * modal
                 modal -= spread_cost * frac
@@ -366,35 +374,37 @@ def backtest(df, strat_cfg, ticker_cfg, strategy_label):
                 trade_frac = frac
                 in_trade = True
         else:
-            bars = i - entry_idx; exit = False; profit = 0.0
+            bars = i - entry_idx; exit = False
+            position_value = modal_at_entry * trade_frac
             if posisi == "BUY":
-                if c <= sl_price: profit = (sl_price - entry_price) / entry_price * modal_at_entry * trade_frac; exit = True
-                elif c >= tp_price: profit = (c - entry_price) / entry_price * modal_at_entry * trade_frac; exit = True
-                elif ef_val < em_val: profit = (c - entry_price) / entry_price * modal_at_entry * trade_frac; exit = True
-                elif bars >= p["max_hold_bars"]: profit = (c - entry_price) / entry_price * modal_at_entry * trade_frac; exit = True
+                unrealized_pnl = (c - entry_price) / entry_price * position_value
+                if c <= sl_price: exit = True
+                elif c >= tp_price: exit = True
+                elif ef_val < em_val: exit = True
+                elif bars >= p["max_hold_bars"]: exit = True
                 else:
                     td = a * p["atr_trail_mult"]
                     if not trail and (c - entry_price) >= td: trail = True; sl_price = entry_price + td * 0.3
                     if trail: sl_price = max(sl_price, c - td * 0.5)
-                    profit = (c - df["close"].iloc[i-1]) / df["close"].iloc[i-1] * modal_at_entry * trade_frac * p["running_pct"]
             else:
-                if c >= sl_price: profit = (entry_price - sl_price) / entry_price * modal_at_entry * trade_frac; exit = True
-                elif c <= tp_price: profit = (entry_price - c) / entry_price * modal_at_entry * trade_frac; exit = True
-                elif ef_val > em_val: profit = (entry_price - c) / entry_price * modal_at_entry * trade_frac; exit = True
-                elif bars >= p["max_hold_bars"]: profit = (entry_price - c) / entry_price * modal_at_entry * trade_frac; exit = True
+                unrealized_pnl = (entry_price - c) / entry_price * position_value
+                if c >= sl_price: exit = True
+                elif c <= tp_price: exit = True
+                elif ef_val > em_val: exit = True
+                elif bars >= p["max_hold_bars"]: exit = True
                 else:
                     td = a * p["atr_trail_mult"]
                     if not trail and (entry_price - c) >= td: trail = True; sl_price = entry_price - td * 0.3
                     if trail: sl_price = min(sl_price, c + td * 0.5)
-                    profit = (df["close"].iloc[i-1] - c) / df["close"].iloc[i-1] * modal_at_entry * trade_frac * p["running_pct"]
 
             if exit:
-                modal += profit; day_pnl += profit
+                modal += unrealized_pnl
                 trades.append({"tgl": df.index[i], "posisi": posisi, "held": bars,
-                    "profit": round(profit), "modal": round(modal), "conf": conf, "frac": trade_frac})
-                in_trade = False; posisi = None
+                    "profit": round(unrealized_pnl), "modal": round(modal), "conf": conf, "frac": trade_frac})
+                unrealized_pnl = 0.0; in_trade = False; posisi = None
 
-    if current_day: daily_pnl[current_day] = day_pnl
+    if current_day:
+        daily_pnl[current_day] = (modal + unrealized_pnl) - day_start_equity
     return modal, dd_max, trades, daily_pnl
 
 
@@ -484,7 +494,7 @@ def main():
 
             status = "OK" if avg_daily >= ticker["target"] else "NO"
             print(f"  -> ROI {roi:+.1f}% DD {dd_max:.1f}% PF {pf:.2f} "
-                  f"Rp{avg_daily:,.0f}/hr (target Rp{ticker['target']:,}) {status} "
+                  f"Rp{avg_daily:,.0f}/hari (target Rp{ticker['target']:,}) {status} "
                   f"| {len(trades)} trades WR {len(win)/max(len(trades),1)*100:.0f}%")
 
     # ============================================================
@@ -495,7 +505,7 @@ def main():
     print("  RINGKASAN HASIL BACKTEST")
     print("=" * 90)
 
-    header = f"{'Ticker':<10} {'Strategi':<20} {'TF':<5} {'ROI':>8} {'DD':>6} {'PF':>5} {'Rp/hr':>12} {'Target':>10} {'Status':>8} {'Trades':>7} {'WR':>5} {'Hari':>6}"
+    header = f"{'Ticker':<10} {'Strategi':<20} {'TF':<5} {'ROI':>8} {'DD':>6} {'PF':>5} {'Rp/hari':>12} {'Target':>10} {'Status':>8} {'Trades':>7} {'WR':>5} {'Hari':>6}"
     print(header)
     print("-" * 90)
 
@@ -519,7 +529,7 @@ def main():
         if not best: continue
         best.sort(key=lambda x: x["avg_daily"], reverse=True)
         b = best[0]
-        print(f"  {sym:<10} -> {b['strategy']:<20} Rp{b['avg_daily']:,.0f}/hr | ROI {b['roi']:+.1f}% | DD {b['dd']:.1f}%")
+        print(f"  {sym:<10} -> {b['strategy']:<20} Rp{b['avg_daily']:,.0f}/hari | ROI {b['roi']:+.1f}% | DD {b['dd']:.1f}%")
 
     # Kesimpulan
     print("\n\n")
