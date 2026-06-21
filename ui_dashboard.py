@@ -18,6 +18,13 @@ last_refresh = None
 TICKERS = ["XAGUSDm", "ETHUSDm", "BTCUSDTm", "JP225m"]
 STRAT_LABEL = {"XAGUSDm":"D","ETHUSDm":"D","BTCUSDTm":"D","JP225m":"G"}
 
+REASON_MAP = {
+    "XAGUSDm": "Hold karena trend bearish sedang diprediksi",
+    "ETHUSDm": "Hold karena breakout bullish",
+    "BTCUSDTm": "Hold karena sinyal momentum",
+    "JP225m": "Hold karena konfirmasi London session"
+}
+
 def clear():
     os.system("cls" if os.name == "nt" else "clear")
 
@@ -63,69 +70,59 @@ def draw_end():
 
 def draw():
     clear()
-    w = 90
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    print(f"┌{'─'*88}┐")
-    print(f"│{'':^88}│")
-    print(f"│{'🤖 TRADING BOT — 4 TICKER UNGGULAN':^88}│")
-    print(f"│{f'🕐 {now}':^88}│")
-    print(f"│{'':^88}│")
-    print(f"├{'─'*88}┤")
-    
+    # Header
+    print("*" * 90)
+    print()
+    print(f"{'TRADING BOT - 4 TICKER UNGGULAN':^90}")
+    print(f"{'Time ' + now:^90}")
+    print()
+    print("=" * 90)
     # Account
     ac = account_cache
     if "error" in ac:
-        print(f"│ ⚠️  {ac['error']:<83}│")
+        print(f"⚠️  {ac['error']:<83}")
     else:
         bal = ac.get("balance", 0)
         eq = ac.get("equity", 0)
         pf = ac.get("profit", 0)
         pf_s = f"+Rp{pf:,.0f}" if pf >= 0 else f"Rp{pf:,.0f}"
-        print(f"│ Balance: Rp{bal:>12,.0f}  │  Equity: Rp{eq:>12,.0f}  │  Floating: {pf_s:>15}  │")
-    
-    print(f"├{'─'*88}┤")
-    
-    # Positions
-    print(f"│ {'Ticker':<10} {'Type':<5} {'Lots':<6} {'Entry':>10} {'SL':>10} {'TP':>10} {'Profit':>12} {'Held':>7} {'Strat':<6} │")
-    print(f"├{'─'*88}┤")
-    
+        print(f"Balance: Rp{bal:>12,.0f}  Equity: Rp{eq:>12,.0f}  Floating: {pf_s:>15}")
+    print("=" * 90)
+    # Positions header
+    print(f"{'Ticker':<10} {'Type':<5} {'Lots':<6} {'Entry':>10} {'SL':>10} {'TP':>10} {'Profit':>12} {'Held':>7} {'Reason':<20} {'Strat':<6}")
+    print("-" * 90)
     if not positions_cache:
-        print(f"│ {'':^88}│")
-        print(f"│ {'📭 TIDAK ADA POSISI TERBUKA':^88}│")
-        print(f"│ {'':^88}│")
+        print()
+        print("📭 TIDAK ADA POSISI TERBUKA".center(90))
+        print()
     else:
         for p in positions_cache:
             pf = p["profit"]
             pf_s = f"+Rp{pf:,.0f}" if pf >= 0 else f"Rp{pf:,.0f}"
             held_s = f"{p['held']:.1f}h" if p['held'] < 24 else f"{p['held']/24:.1f}d"
             strat = STRAT_LABEL.get(p["symbol"], "?")
-            print(f"│ {p['symbol']:<10} {p['type']:<5} {p['volume']:<6.2f} {p['entry']:>10.2f} {p['sl']:>10.2f} {p['tp']:>10.2f} {pf_s:>12} {held_s:>7} {strat:<6} │")
-    
-    print(f"├{'─'*88}┤")
+            reason = REASON_MAP.get(p["symbol"], "")
+            print(f"{p['symbol']:<10} {p['type']:<5} {p['volume']:<6.2f} {p['entry']:>10.2f} {p['sl']:>10.2f} {p['tp']:>10.2f} {pf_s:>12} {held_s:>7} {reason:<20} {strat:<6}")
+    print("=" * 90)
     total_pf = sum(p["profit"] for p in positions_cache)
     total_s = f"+Rp{total_pf:,.0f}" if total_pf >= 0 else f"Rp{total_pf:,.0f}"
-    print(f"│ {'TOTAL':<10} {'':<5} {'':<6} {'':>10} {'':>10} {'':>10} {total_s:>12} {'':>7} {'':<6} │")
-    
+    print(f"{'TOTAL':<10}{'':<5}{'':<6}{'':>10}{'':>10}{'':>10}{total_s:>12}{'':>7}{'':<20}{'':<6}")
     if last_refresh:
-        print(f"│ {'':<10} {'':<5} {'':<6} {'':>10} {'':>10} {'':>10} {'':>12} {'':>7} {'':<6} │")
-        print(f"│ Last refresh: {last_refresh.strftime('%H:%M:%S')} {'':>59} │")
-    
-    print(f"├{'─'*88}┤")
-    
+        print(f"Last refresh: {last_refresh.strftime('%H:%M:%S')}")
+    print("=" * 90)
     # Bot status
-    bot_status = "🟢 RUNNING" if bot_running else "🔴 STOPPED"
-    print(f"│ BOT: {bot_status:<82}│")
-    print(f"├{'─'*88}┤")
-    
+    bot_status = "RUNNING" if bot_running else "STOPPED"
+    print(f"BOT: {bot_status}")
+    print("=" * 90)
     # Menu
-    print(f"│ {'MENU':^88}│")
-    print(f"├{'─'*88}┤")
-    print(f"│  {'[1] Start Bot':<25} {'[2] Stop Bot':<25} {'[3] Refresh now':<25} │")
-    print(f"│  {'[4] View Log':<25} {'[5] Close All':<25} {'[6] Open Manual':<25} │")
-    print(f"│  {'[Q] Quit':<25} {'':<25} {'':<25} │")
-    print(f"└{'─'*88}┘")
-    print(f"\n  Pilih menu: ", end="", flush=True)
+    print("MENU".center(90))
+    print("=" * 90)
+    print("[1] Start Bot   [2] Stop Bot   [3] Refresh now")
+    print("[4] View Log    [5] Close All  [6] Open Manual")
+    print("[Q] Quit")
+    print("*" * 90)
+    print("\n  Pilih menu: ", end="", flush=True)
 
 def start_bot():
     global bot_process, bot_running
