@@ -72,12 +72,12 @@ def draw():
     clear()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # Header
-    print("*" * 90)
+    print()
     print()
     print(f"{'TRADING BOT - 4 TICKER UNGGULAN':^90}")
     print(f"{'Time ' + now:^90}")
     print()
-    print("=" * 90)
+    print()
     # Account
     ac = account_cache
     if "error" in ac:
@@ -88,10 +88,10 @@ def draw():
         pf = ac.get("profit", 0)
         pf_s = f"+Rp{pf:,.0f}" if pf >= 0 else f"Rp{pf:,.0f}"
         print(f"Balance: Rp{bal:>12,.0f}  Equity: Rp{eq:>12,.0f}  Floating: {pf_s:>15}")
-    print("=" * 90)
+    print()
     # Positions header
     print(f"{'Ticker':<10} {'Type':<5} {'Lots':<6} {'Entry':>10} {'SL':>10} {'TP':>10} {'Profit':>12} {'Held':>7} {'Reason':<20} {'Strat':<6}")
-    print("-" * 90)
+    print()
     if not positions_cache:
         print()
         print("📭 TIDAK ADA POSISI TERBUKA".center(90))
@@ -104,24 +104,31 @@ def draw():
             strat = STRAT_LABEL.get(p["symbol"], "?")
             reason = REASON_MAP.get(p["symbol"], "")
             print(f"{p['symbol']:<10} {p['type']:<5} {p['volume']:<6.2f} {p['entry']:>10.2f} {p['sl']:>10.2f} {p['tp']:>10.2f} {pf_s:>12} {held_s:>7} {reason:<20} {strat:<6}")
-    print("=" * 90)
+    print()
+    # Inactive tickers
+    missing = [t for t in TICKERS if t not in [p['symbol'] for p in positions_cache]]
+    if missing:
+        print("Inactive Tickers:".center(90))
+        for t in missing:
+            reason = REASON_MAP.get(t, "No signal")
+            print(f"{t:<10} {reason}")
     total_pf = sum(p["profit"] for p in positions_cache)
     total_s = f"+Rp{total_pf:,.0f}" if total_pf >= 0 else f"Rp{total_pf:,.0f}"
     print(f"{'TOTAL':<10}{'':<5}{'':<6}{'':>10}{'':>10}{'':>10}{total_s:>12}{'':>7}{'':<20}{'':<6}")
     if last_refresh:
         print(f"Last refresh: {last_refresh.strftime('%H:%M:%S')}")
-    print("=" * 90)
+    print()
     # Bot status
     bot_status = "RUNNING" if bot_running else "STOPPED"
     print(f"BOT: {bot_status}")
-    print("=" * 90)
+    print()
     # Menu
     print("MENU".center(90))
-    print("=" * 90)
+    print()
     print("[1] Start Bot   [2] Stop Bot   [3] Refresh now")
     print("[4] View Log    [5] Close All  [6] Open Manual")
     print("[Q] Quit")
-    print("*" * 90)
+    print()
     print("\n  Pilih menu: ", end="", flush=True)
 
 def start_bot():
@@ -231,7 +238,7 @@ def view_log():
     clear()
     print(f"\n{'='*90}")
     print(f"  LAST 50 LINES — {LOG_FILE}")
-    print(f"{'='*90}\n")
+    print("\n")
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE) as f:
             lines = f.readlines()
