@@ -41,7 +41,9 @@ TICKER_CFG = [
     },
 ]
 
-def prep_data(df, p):
+CONF_SIZING = [(0, 2, 1.0), (3, 4, 1.5), (5, 6, 2.0)]
+
+def prep_data(df, p, dh1=None):
     ef, em = p["ema_fast"], p["ema_medium"]
     df[f"ema{ef}"] = ema(df["close"], ef)
     df[f"ema{em}"] = ema(df["close"], em)
@@ -54,8 +56,51 @@ def prep_data(df, p):
     else:
         df["macd"] = 0; df["macd_sig"] = 0
     df["vol_ma"] = sma(df["tick_volume"], p.get("volume_ma_period", 20))
+
+    # BB squeeze
+    bbu, bbm, bbl = bb(df, 20, 2)
+    df["bbw"] = (bbu - bbl) / bbm
+    df["bbw_ma"] = sma(df["bbw"], 20)
+
+    # H1 trend alignment
+    df["h1_trend"] = 0
+    if dh1 is not None and len(dh1) > 100:
+        dh1["ema9"] = ema(dh1["close"], 9)
+        dh1["ema21"] = ema(dh1["close"], 21)
+        dh1["h1_val"] = np.where(dh1["ema9"] > dh1["ema21"], 1, -1)
+        dh1.dropna(inplace=True)
+        h1_series = dh1["h1_val"].resample("15min").ffill()
+        df["h1_trend"] = h1_series.reindex(df.index, method="ffill").fillna(0).astype(int)
+
     df.dropna(inplace=True)
     return df
+
+def compute_confidence(row):
+    s = 0
+    ef_col = f"ema5"; em_col = f"ema13"
+    bull = row[ef_col] > row[em_col]
+    h1 = row.get("h1_trend", 0)
+    if (bull and h1 == 1) or (not bull and h1 == -1):
+        s += 2
+    squeeze = row["bbw"] < row["bbw_ma"]
+    if squeeze:
+        s += 1
+    if row["tick_volume"] > row["vol_ma"] * 1.2:
+        s += 1
+    if bull and row["rsi"] > 65:
+        s += 1
+    if not bull and row["rsi"] < 35:
+        s += 1
+    hour = row.get("hour_utc", 0)
+    if 7 <= hour < 15:
+        s += 1
+    return s
+
+def get_fraction(conf):
+    for lo, hi, frac in CONF_SIZING:
+        if lo <= conf <= hi:
+            return frac
+    return 1.0
 
 def get_signal(df, i, p):
     row = df.iloc[i]; c = row["close"]
@@ -142,16 +187,16 @@ def manage_position(ticker, params):
         return pos
     return None
 
-def open_trade(ticker, cfg, signal_dir):
-    """Open a new position"""
+def open_trade(ticker, cfg, signal_dir, fraction=1.0):
+    """Open a new position with confidence-based sizing"""
     params = cfg["params"]
     mt5.symbol_select(ticker, True)
     s = mt5.symbol_info(ticker)
     tick = mt5.symbol_info_tick(ticker)
     
-    # Calculate lot size
+    # Calculate lot size with confidence fraction
     vol_min = s.volume_min
-    lot_pct = params.get("lot_pct", 100)
+    lot_pct = params.get("lot_pct", 100) * fraction
     vol = max(vol_min, round(vol_min * (lot_pct / 100), 2))
     vol = min(vol, s.volume_max)
     vol = round(vol / s.volume_step) * s.volume_step
@@ -177,7 +222,8 @@ def open_trade(ticker, cfg, signal_dir):
            "price":price,"sl":sl,"tp":tp,"deviation":10,"magic":123456,"comment":f"{cfg['strategy'].upper()}_auto",
            "type_time":mt5.ORDER_TIME_GTC,"type_filling":mt5.ORDER_FILLING_IOC}
     r = mt5.order_send(req)
-    print(f"  OPEN {ticker} {signal_dir} {vol} lots @ {price:.2f} SL:{sl:.2f} TP:{tp:.2f} retcode={r.retcode}")
+    frac_str = f"x{fraction:.1f}" if fraction != 1.0 else ""
+    print(f"  OPEN {ticker} {signal_dir} {vol} lots{frac_str} @ {price:.2f} SL:{sl:.2f} TP:{tp:.2f} retcode={r.retcode}")
     return r.retcode == 10009
 
 def main():
@@ -223,19 +269,38 @@ def main():
             df = pd.DataFrame(rates)
             df["time"] = pd.to_datetime(df["time"], unit="s")
             df.set_index("time", inplace=True)
-            df = prep_data(df, tc["params"])
+            
+            # Fetch H1 data for confidence scoring (JP225m)
+            dh1 = None
+            if tc["strategy"] == "g":
+                h1_rates = mt5.copy_rates_from_pos(sym, mt5.TIMEFRAME_H1, 0, tc["bars"] // 4)
+                if h1_rates is not None and len(h1_rates) > 100:
+                    dh1 = pd.DataFrame(h1_rates)
+                    dh1["time"] = pd.to_datetime(dh1["time"], unit="s")
+                    dh1.set_index("time", inplace=True)
+            
+            df = prep_data(df, tc["params"], dh1)
             if len(df) < 5:
                 continue
+            
+            # Compute confidence for G strategies
+            fraction = 1.0
+            conf = 0
+            if tc["strategy"] == "g":
+                df["hour_utc"] = df.index.hour
+                conf = compute_confidence(df.iloc[-1])
+                fraction = get_fraction(conf)
             
             sig = get_signal(df, -1, tc["params"])
             last = df.iloc[-1]
             ef, em = f"ema{tc['params']['ema_fast']}", f"ema{tc['params']['ema_medium']}"
             trend = "UP" if last[ef] > last[em] else "DOWN"
             
-            print(f"  Close: {last['close']:.2f} | Trend: {trend} | RSI: {last['rsi']:.0f} | Signal: {sig}")
+            conf_str = f" | Conf: {conf} x{fraction:.1f}" if tc["strategy"] == "g" else ""
+            print(f"  Close: {last['close']:.2f} | Trend: {trend} | RSI: {last['rsi']:.0f} | Signal: {sig}{conf_str}")
             
             if sig != "HOLD":
-                ok = open_trade(sym, tc, sig)
+                ok = open_trade(sym, tc, sig, fraction)
                 if ok:
                     print(f"  >> {sym} {sig} OPENED!")
         

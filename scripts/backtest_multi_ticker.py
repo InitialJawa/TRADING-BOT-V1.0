@@ -2,6 +2,7 @@ import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..")
 import json, glob
 import pandas as pd
 import numpy as np
+import MetaTrader5 as mt5
 from datetime import datetime, timezone
 from strategies.shared.indicators import ema, sma, atr, rsi, macd, bb
 
@@ -28,13 +29,13 @@ for fpath in sorted(glob.glob(os.path.join(config_dir, "ticker_*.json"))):
 # Untuk A/B/C: D1/H4 sederhana (SMA/EMA cross + RSI)
 # Untuk D/F/G/H: EMA cross + RSI + MACD (existing logic)
 STRATEGY_MAP = {
-    "a": {"name": "A D1 Long Bias",   "tf": "D1", "tf_mt5": 5,  "bars": 1000,  "dd_limit": 20},
-    "b": {"name": "B H4 EMA Cross",   "tf": "H4", "tf_mt5": 3,  "bars": 2000,  "dd_limit": 25},
-    "c": {"name": "C H4 PSAR",        "tf": "H4", "tf_mt5": 3,  "bars": 2000,  "dd_limit": 25},
-    "d": {"name": "D H1 Confluence",  "tf": "H1", "tf_mt5": 1,  "bars": 3000,  "dd_limit": 20},
-    "e": {"name": "E H1 Donchian",    "tf": "H1", "tf_mt5": 1,  "bars": 3000,  "dd_limit": 20},
-    "f": {"name": "F M15 Turbo",      "tf": "M15","tf_mt5": 2,  "bars": 10000, "dd_limit": 25},
-    "g": {"name": "G M15 Confidence", "tf": "M15","tf_mt5": 2,  "bars": 10000, "dd_limit": 25},
+    "a": {"name": "A D1 Long Bias",   "tf": "D1", "tf_mt5": mt5.TIMEFRAME_D1,  "bars": 1000,  "dd_limit": 20},
+    "b": {"name": "B H4 EMA Cross",   "tf": "H4", "tf_mt5": mt5.TIMEFRAME_H4,  "bars": 2000,  "dd_limit": 25},
+    "c": {"name": "C H4 PSAR",        "tf": "H4", "tf_mt5": mt5.TIMEFRAME_H4,  "bars": 2000,  "dd_limit": 25},
+    "d": {"name": "D H1 Confluence",  "tf": "H1", "tf_mt5": mt5.TIMEFRAME_H1,  "bars": 3000,  "dd_limit": 20},
+    "e": {"name": "E H1 Donchian",    "tf": "H1", "tf_mt5": mt5.TIMEFRAME_H1,  "bars": 3000,  "dd_limit": 20},
+    "f": {"name": "F M15 Turbo",      "tf": "M15","tf_mt5": mt5.TIMEFRAME_M15, "bars": 10000, "dd_limit": 25},
+    "g": {"name": "G M15 Confidence", "tf": "M15","tf_mt5": mt5.TIMEFRAME_M15, "bars": 10000, "dd_limit": 25},
 }
 
 # Load strategies per ticker from config/{ticker_name}/*.json
@@ -129,7 +130,6 @@ for ticker in TICKERS:
 # DATA FETCHING
 # ============================================================
 def fetch_data(symbol, timeframe, bars):
-    import MetaTrader5 as mt5
     if not mt5.initialize():
         return None, None
     mt5.symbol_select(symbol, True)
