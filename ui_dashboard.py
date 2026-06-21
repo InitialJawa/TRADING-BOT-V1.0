@@ -3,8 +3,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from datetime import datetime
 import MetaTrader5 as mt5
 
-BOT_SCRIPT = os.path.join(os.path.dirname(__file__), "live_bot_4_ticker.py")
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+BASE_DIR = os.path.dirname(__file__)
+BOT_SCRIPT = os.path.join(BASE_DIR, "scripts", "live_bot_4_ticker.py")
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 LOG_FILE = os.path.join(LOG_DIR, "live_bot.log")
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -129,14 +130,20 @@ def draw():
 def start_bot():
     global bot_process, bot_running
     if bot_running:
-        print("\n  Bot already running!")
-        time.sleep(1)
-        return
+        # Check if process is actually alive
+        if bot_process and bot_process.poll() is None:
+            print("\n  Bot already running!")
+            time.sleep(1)
+            return
+        else:
+            print("\n  Stale flag detected, resetting...")
+            bot_running = False
+            bot_process = None
     bot_process = subprocess.Popen(
         [sys.executable, BOT_SCRIPT],
         stdout=open(LOG_FILE, "a"),
         stderr=subprocess.STDOUT,
-        cwd=os.path.dirname(os.path.dirname(__file__))
+        cwd=BASE_DIR
     )
     bot_running = True
     print(f"\n  ✅ Bot started (PID: {bot_process.pid})")

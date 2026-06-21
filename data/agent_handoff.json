@@ -1,18 +1,20 @@
 {
   "task": {
-    "id": 3,
-    "title": "Live bot siap jalan — tinggal user yg start",
-    "description": "Live bot untuk 4 ticker unggulan sudah dibuat. User tinggal run.",
+    "id": 4,
+    "title": "Backtrader backtest + confidence scoring + timeframe fix",
+    "description": "Backtest best 4 strategies with backtrader, fix timeframe bug in backtest_multi_ticker.py, add confidence scoring to live bot for JP225m G",
     "assigned_to": "dev",
-    "priority": "medium"
+    "priority": "high"
   },
   "status": "done",
-  "result": "",
+  "result": "1. backtest_backtrader_g.py: Strategy G (XAUUSDm M15) backtrader backtest → ROI +1813.7%, DD 5.2%, PF 2.70\n2. backtest_best4_backtrader.py: Best 4 backtrader backtest → XAGUSDm +478.9%, ETHUSDm +67.4%, BTCUSDTm +6.8%, JP225m +507.2%\n3. backtest_multi_ticker.py: Fixed timeframe constants (was using M1/M2 instead of H1/M15)\n4. live_bot_4_ticker.py: Added confidence scoring for JP225m G (H1 trend, BB squeeze, volume spike, RSI extreme, London session) with dynamic sizing 1.0x/1.5x/2.0x",
   "feedback": "",
   "notes": [
-    "Live bot: scripts/live_bot_4_ticker.py",
-    "Runner: scripts/run_live_bot.ps1 start|stop|log",
-    "Bot ngecek tiap 5 menit, manage trailing stop, open posisi baru"
+    "BUG FOUND: original backtest_multi_ticker.py used tf_mt5=1 (M1) for H1 strategies, tf_mt5=2 (M2) for M15 — all results from that script are invalid",
+    "Live bot command: python ui_dashboard.py (from D:\\ALL IN ONE\\CODE\\TRADING-BOT-V1.0)",
+    "Atau run langsung: cd /d D:\\ALL IN ONE\\CODE\\TRADING-BOT-V1.0 && python ui_dashboard.py",
+    "Confidence scoring: conf 0-2→1.0x, 3-4→1.5x, 5-6→2.0x lot sizing",
+    "Backtrader results confirm all 4 strategies positive ROI with correct timeframes"
   ],
-  "round": 3
+  "round": 4
 }
