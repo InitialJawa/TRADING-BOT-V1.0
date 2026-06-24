@@ -1,6 +1,6 @@
 # Trading Bot V1.0 — AI Risk & Operations Manager
 
-Sistem trading otomatis dengan arsitektur AI-driven untuk audit, monitoring, dan risk management. Integrasi dengan OpenCode Agent, Gemini CLI, dan MT5.
+Sistem trading otomatis dengan arsitektur AI-driven untuk audit, monitoring, dan manajemen risiko. Terintegrasi dengan OpenCode Agent, Gemini CLI, dan MT5.
 
 ## Arsitektur
 
@@ -24,6 +24,9 @@ SQLite State → Context Builder → OpenCode Agent → Decision JSON → Parser
 
 ```
 ├── config/          # Konfigurasi bot dan strategi
+│   ├── settings.json           # Konfigurasi utama
+│   ├── tickers/               # Konfigurasi ticker
+│   └── */                      # Konfigurasi per-ticker
 ├── data/            # Database SQLite, log, state
 ├── scripts/         # Backtest, optimasi, strategi
 ├── src/
@@ -40,26 +43,47 @@ SQLite State → Context Builder → OpenCode Agent → Decision JSON → Parser
 
 ## Fitur
 
-- **System Audit** — monitoring koneksi MT5, health VPS, heartbeat
-- **Risk Audit** — monitoring drawdown, Sharpe ratio, lot size
-- **Backtest Audit** — validasi hasil backtest harian
-- **AI Manager** — analisis via OpenCode Agent (Gemini CLI primary, Ollama fallback)
-- **Telegram Alert** — notifikasi real-time untuk issue kritis
-- **Override Handler** — eksekusi command operasional (reduce lot, pause strategy, alert)
+### Audit System
+- Monitoring koneksi MT5
+- Monitoring kesehatan VPS
+- Monitoring heartbeat
 
-## Keamanan
+### Audit Risk
+- Monitoring drawdown
+- Monitoring Sharpe ratio
+- Monitoring ukuran lot
 
-AI Manager **hanya** boleh:
-- reduce lot
-- pause strategy
-- raise alert
-- request revalidation / human review
+### Audit Backtest
+- Validasi hasil backtest harian
 
-AI Manager **dilarang**:
-- membuka/menutup order
-- menambah leverage/lot
-- mengubah Statistical Gate
-- menghasilkan sinyal BUY/SELL
+### AI Manager
+- Analisis melalui OpenCode Agent
+- Gemini CLI sebagai provider utama
+- Ollama sebagai fallback
+
+### Telegram Alert
+- Notifikasi real-time untuk issue kritis
+
+### Override Handler
+- Eksekusi command operasional:
+  - `reduce_lot` - mengurangi ukuran lot
+  - `pause_strategy` - menghentikan strategi
+  - `alert_only` - hanya mengirim alert
+
+## Keamanan AI Manager
+
+### Izin (Diizinkan)
+- `reduce_lot` - mengurangi ukuran lot
+- `pause_strategy` - menghentikan strategi
+- `alert_only` - mengirim alert
+- `request_revalidation` - meminta validasi ulang
+- `request_human_review` - meminta tinjauan manusia
+
+### Larangan (Dilarang)
+- `buy`, `sell`, `close_position` - membuka/menutup posisi
+- `increase_lot`, `increase_leverage` - meningkatkan lot/leverage
+- `change_statistical_gate` - mengubah Statistical Gate
+- Menghasilkan sinyal BUY/SELL
 
 ## Instalasi
 
@@ -70,9 +94,9 @@ pip install -r requirements.txt
 ## Konfigurasi
 
 Edit `config/settings.json`:
-- Path database dan log
-- Token dan chat ID Telegram
-- Konfigurasi provider AI
+- `mt5_login` - Login MT5
+- `mt5_password` - Password MT5
+- `mt5_server` - Server MT5
 
 ## Menjalankan
 
