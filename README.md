@@ -1,6 +1,8 @@
-# Trading Bot V1.0 — AI Risk & Operations Manager
+# 🤖 Trading Bot V1.0 — AI Risk & Operations Manager
 
 Sistem trading otomatis dengan arsitektur AI-driven untuk audit, monitoring, dan manajemen risiko. Terintegrasi dengan OpenCode Agent, Gemini CLI, dan MT5.
+
+> "AI yang bertanggung jawab untuk memantau risiko dan operasi trading, bukan untuk melakukan trading itu sendiri."
 
 ## Arsitektur
 
