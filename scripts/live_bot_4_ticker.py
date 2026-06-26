@@ -45,6 +45,9 @@ def open_trade(symbol, direction, params):
     s = mt5.symbol_info(symbol)
     tick = mt5.symbol_info_tick(symbol)
     a = mt5.account_info()
+    if s is None or tick is None:
+        print(f"  SYMBOL {symbol} NOT FOUND on this account")
+        return False
 
     rates = mt5.copy_rates_from_pos(symbol, TIMEFRAME, 0, 100)
     if rates is None:
@@ -63,14 +66,21 @@ def open_trade(symbol, direction, params):
     risk_per_lot = sl_ticks * s.trade_tick_value
     vol = max(s.volume_min, min(s.volume_max, risk_amount / max(risk_per_lot, 1e-9)))
     vol = round(vol / s.volume_step) * s.volume_step
+    vol = round(vol, 8)
 
     order_type = mt5.ORDER_TYPE_BUY if direction == "BUY" else mt5.ORDER_TYPE_SELL
     req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": symbol, "volume": vol,
-           "type": order_type, "price": price, "sl": sl, "tp": 0,
+           "type": order_type, "price": price, "sl": sl, "tp": 0.0,
            "deviation": 10, "magic": 123457, "comment": "F_M15",
            "type_time": mt5.ORDER_TIME_GTC, "type_filling": mt5.ORDER_FILLING_IOC}
     r = mt5.order_send(req)
     print(f"  OPEN {symbol} {direction} {vol} lots @ {price:.2f} SL:{sl:.2f} risk:{risk_amount:.0f}")
+    if r is None:
+        err = mt5.last_error()
+        print(f"  ORDER_SEND FAILED: {err}")
+        return False
+    if r.retcode != 10009:
+        print(f"  ORDER_SEND RETCODE: {r.retcode} {r.comment}")
     return r.retcode == 10009
 
 def manage_position(symbol, params):
