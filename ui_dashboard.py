@@ -15,13 +15,14 @@ positions_cache = []
 account_cache = {}
 last_refresh = None
 
-TICKERS = ["XAGUSDm", "XAUUSDm", "JP225m"]
-STRAT_LABEL = {"XAGUSDm":"I","XAUUSDm":"I","JP225m":"I"}
+TICKERS = ["ETHUSDm", "XAGUSDm", "BTCUSDTm", "JP225m"]
+STRAT_LABEL = {"ETHUSDm":"F","XAGUSDm":"F","BTCUSDTm":"F","JP225m":"F"}
 
 REASON_MAP = {
-    "XAGUSDm": "Stage analysis: S2 buy / S4 sell",
-    "XAUUSDm": "Stage analysis: S2 buy / S4 sell",
-    "JP225m": "Stage analysis: S2 buy / S4 sell"
+    "ETHUSDm": "F M15 Turbo: EMA5/13 cross + RSI",
+    "XAGUSDm": "F M15 Turbo: EMA5/13 cross + RSI",
+    "BTCUSDTm": "F M15 Turbo: EMA5/13 cross + RSI",
+    "JP225m": "F M15 Turbo: EMA5/13 cross + RSI"
 }
 
 def clear():
