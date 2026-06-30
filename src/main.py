@@ -11,6 +11,7 @@ from src.audit.backtest_audit import BacktestAudit
 from src.context_builder import ContextBuilder
 from src.provider.opencode_cli import query as opencode_query, parse_json_response
 from src.provider.ollama_fallback import OllamaFallback
+from src.provider.gemini_cli import GeminiCLI
 from src.agent_ipc import init_chat, add_message, build_debate_context, is_finished, increment_round, get_conversation_summary
 from src.override_handler import OverrideHandler
 from src.notification.telegram import TelegramNotifier
@@ -56,8 +57,40 @@ def run_cycle():
 
     ctx_json = json.dumps(ctx, separators=(",", ":"))
 
-    ACION_PRIORITY = {"pause_strategy": 3, "reduce_lot": 2, "alert_only": 1}
+    ACTION_PRIORITY = {"pause_strategy": 3, "reduce_lot": 2, "alert_only": 1}
     MAX_DEBATE_ROUNDS = 2
+
+    # === Provider fallback chain ===
+    ollama = OllamaFallback()
+    gemini_cli = GeminiCLI()
+    provider_used = {"ai1": "opencode_cli", "ai2": "opencode_cli"}
+
+    def _is_rate_limit(raw: str) -> bool:
+        indicators = ["429", "rate limit", "too many requests", "quota", "limit reached", "resource exhausted", "model overloaded"]
+        lower = raw.lower()
+        return any(i in lower for i in indicators)
+
+    def _query_with_fallback(prompt: str, ctx: str, ai_label: str) -> str:
+        nonlocal provider_used
+        raw = opencode_query(prompt, ctx)
+        if raw and not _is_rate_limit(raw):
+            provider_used[ai_label] = "opencode_cli"
+            return raw
+
+        print(f"[CYCLE] Opencode rate limit for {ai_label}, falling back to Ollama...")
+        ollama_raw = ollama.query(f"{prompt}\n\nContext: {ctx}")
+        if ollama_raw:
+            provider_used[ai_label] = "ollama"
+            return ollama_raw
+
+        print(f"[CYCLE] Ollama unavailable for {ai_label}, falling back to Gemini CLI...")
+        gemini_raw = gemini_cli.query(f"{prompt}\n\nContext: {ctx}")
+        if gemini_raw:
+            provider_used[ai_label] = "gemini_cli"
+            return gemini_raw
+
+        print(f"[CYCLE] All providers failed for {ai_label}, returning alert_only")
+        return json.dumps({"action": "alert_only", "reason": f"All AI providers unavailable for {ai_label}"})
 
     def agent_prompt(agent_name, role_desc, rules):
         return f"""You are {agent_name} — {role_desc}
@@ -81,7 +114,7 @@ FORBIDDEN: buy, sell, close, increase_lot, increase_leverage
     def query_ai1(ctx_str, round_num):
         prompt = agent_prompt("AI-1 (Risk Manager)", "conservative — prioritaskan safety, minimalisir drawdown, jaga modal", "alert_only if normal, reduce_lot if DD>10% or lot>300, pause_strategy if Sharpe<0.1")
         full = f"{prompt}\n\nContext: {ctx_str}\n\nDebate round #{round_num}. Berikan argumen dan keputusanmu."
-        raw = opencode_query(full, "")
+        raw = _query_with_fallback(full, "", "ai1")
         msg = extract_message(raw)
         if msg:
             add_message("AI-1", "AI-2", msg, round_num)
@@ -91,7 +124,7 @@ FORBIDDEN: buy, sell, close, increase_lot, increase_leverage
         prompt = agent_prompt("AI-2 (Strategy Advisor)", "optimis — fokus pada performa strategi, peluang market, jangan pause kecuali darurat", "alert_only if normal, reduce_lot only if DD>15%, pause_strategy only if Sharpe<0.05 OR backtest failed")
         chat_log = get_conversation_summary()
         full = f"{prompt}\n\nContext: {ctx_str}\n\nDebate Log:\n{chat_log}\n\nDebate round #{round_num}. Baca argumen AI-1, berikan counter-argumen dan keputusanmu."
-        raw = opencode_query(full, "")
+        raw = _query_with_fallback(full, "", "ai2")
         msg = extract_message(raw)
         if msg:
             add_message("AI-2", "AI-1", msg, round_num)
@@ -135,8 +168,8 @@ FORBIDDEN: buy, sell, close, increase_lot, increase_leverage
     d1 = extract_final_action(raw_1) or {"action": "alert_only", "reason": "AI-1 failed to produce valid action"}
     d2 = extract_final_action(raw_2) or {"action": "alert_only", "reason": "AI-2 failed to produce valid action"}
 
-    p1 = ACION_PRIORITY.get(d1["action"], 0)
-    p2 = ACION_PRIORITY.get(d2["action"], 0)
+    p1 = ACTION_PRIORITY.get(d1["action"], 0)
+    p2 = ACTION_PRIORITY.get(d2["action"], 0)
     decision = d1 if p1 >= p2 else d2
     decision["_debate_log"] = get_conversation_summary()
     decision["_d1_raw"] = d1["action"]
@@ -167,7 +200,7 @@ FORBIDDEN: buy, sell, close, increase_lot, increase_leverage
     print(f"[CYCLE] Complete: {json.dumps(result, indent=2)}")
     return {
         "status": "COMPLETE",
-        "providers": {"ai1": "opencode_cli", "ai2": "ollama_fallback"},
+        "providers": provider_used,
         "consensus": decision.get("_consensus", "unknown"),
         "decision": decision,
         "result": result,

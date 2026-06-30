@@ -1,6 +1,6 @@
 import subprocess, json, os, sys, tempfile, shutil
 
-MODEL = "google/gemini-2.5-flash"
+MODEL = os.environ.get("OPENCODE_MODEL", "google/gemini-2.5-flash")
 TEMP_DIR = os.path.join(tempfile.gettempdir(), "oc_ai_mgr")
 
 OPCODE_CMD = os.environ.get("OPCODE_CMD") or shutil.which("opencode") or shutil.which("opencode.cmd")
